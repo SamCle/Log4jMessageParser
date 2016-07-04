@@ -22,15 +22,18 @@ import it.csttech.core.data.PageImpl;
 
 public class Log4jFileParser implements LogFileParser {
 
+	private static final String STANDARD_REGEX = "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]{3}";
+	private static final String STANDARD_TIMESTAMP = "yyyy-MM-dd HH:mm:ss,SSS";
+	
 	private String regex, timestampFormat, filename;
 	private Path file;
-	private long currentPosition;
+	private long currentPosition; 
+	private long beginningOfMessages; //stores the actual beginning of messages in the input file. Most likely it will be 0, unless the user provides a file that has been cut without care
 	private int currentLine, currentMessage;
-	private List<LongHolder> linePositions; //TODO eliminate
-	private List<IntHolder> messageLines; //TODO change to messageInitPositions, as List<Long>
+	private List<Long> messageInitPositions;
 
 	public Log4jFileParser(String filename) {
-		// TODO: chiamare l'altro costruttore, con variabili statiche di default.
+		this(filename, STANDARD_REGEX, STANDARD_TIMESTAMP);
 	}
 	
 	public Log4jFileParser(String filename, String regex, String timestampFormat) {
@@ -38,43 +41,41 @@ public class Log4jFileParser implements LogFileParser {
 		this.timestampFormat = timestampFormat;
 		this.regex = regex;
 		file = Paths.get(filename);
-		this.currentPosition      = 0L;
-		this.currentLine    = 0;
+	
+		this.currentPosition = 0L;
+		long positionSaver;
+		StringBuffer line = new StringBuffer();
+		do {
+			positionSaver = this.currentPosition;
+			line = readLine();
+			if ( line == null ) { // Then it's EOF.
+				throw new IllegalArgumentException("This file does not contain any Log4j messages");
+			} else { }
+		} while ( ! isStartOfMessage(line) ); // Start of message found! Update of currentPosition is done in the readLine method itself
+		
+		this.currentPosition = positionSaver;
+		this.beginningOfMessages = positionSaver;
+		
+		this.currentLine = 0;
 		this.currentMessage = 0;
-		this.linePositions = new ArrayList<LongHolder>();
-		linePositions.add(new LongHolder(-1L));
-		this.messageLines = new ArrayList<IntHolder>();
-		messageLines.add(new IntHolder(-1));
+		this.messageInitPositions = new ArrayList<Long>();
+		messageInitPositions.add(new Long(-1));
 	}
 
-	private long getLastLinePositionRead(){
-		return linePositions.get(linePositions.size() - 1).value;
+
+	private Long getLastMessageInitPositionRead(){
+		return messageInitPositions.get(messageInitPositions.size() - 1);
 	}
 
-	private int getLastMessageLineRead(){
-		return messageLines.get(messageLines.size() - 1).value;
-	}
-
-	private boolean addLineReadPosition( long value ){
-		if ( value > getLastLinePositionRead() ) {
-			linePositions.add(new LongHolder(value));
-			return true;
-		}
-		return false;
-	}
-
-	private boolean addMessageReadLine( int value ){
-		if ( value > getLastMessageLineRead() ) {
-			messageLines.add(new IntHolder(value));
+	private boolean addMessageReadInitPosition( Long value ){
+		if ( value > getLastMessageInitPositionRead() ) {
+			messageInitPositions.add(value);
 			return true;
 		}
 		return false;
 	}	
 
 	public StringBuffer readLine() { // TODO: rendere private.
-
-		addLineReadPosition(currentPosition);
-
 		ByteBuffer byteBuffer;
 		StringBuffer line;
 
@@ -129,54 +130,79 @@ public class Log4jFileParser implements LogFileParser {
 		this.currentPosition = position;
 	}
 
-	public LogMessage readMessage(){ // TODO: rendere private.
-		int startRow = currentLine;
-		boolean expandRequired = false;
-		StringBuffer line = new StringBuffer();
-		StringBuffer firstLine = new StringBuffer();
-		long positionSaver = currentPosition;
+	
+	private LogMessage convertMessageFromListToLogMessage(List<String> message) {
+		int startRow = Integer.decode(message.get(0));
 		List<String> lines = new ArrayList<>();
-		do {
-			line = readLine();
-			if ( line == null ) { // Then it's EOF.
-				return null;
-			} else { }
-		} while ( ! isStartOfMessage(line) ); // Start of message found!
-		firstLine = line;
-
-		System.out.println("Reading the first line.");
+		
+		StringBuffer firstLine = new StringBuffer(message.get(1));
+		
+		System.out.println("Reading the first line."); //TODO remove
 		Date timestamp = new SimpleDateFormat(timestampFormat).parse(firstLine.toString(), new ParsePosition(0));
 		firstLine = firstLine.delete(0, timestampFormat.length());
-
-		System.out.println("Date is ok.");	
-		String levelRegex = "(FATAL|ERROR|WARN|INFO|DEBUG|TRACE)";
-		Pattern pattern = Pattern.compile(levelRegex);
+		
+		System.out.println("Date is ok.");	//TODO remove
+		Pattern pattern = Pattern.compile("(FATAL|ERROR|WARN|INFO|DEBUG|TRACE)");
 		Matcher matcher = pattern.matcher(firstLine);
 		matcher.find();
 		String logLevel = firstLine.substring(matcher.start(), matcher.end());
 		firstLine = firstLine.delete(0, matcher.end());
 
-		String threadRegex = "\\[[^\\[\\]]*\\]";
-		pattern = Pattern.compile(threadRegex);
+		pattern = Pattern.compile("\\[[^\\[\\]]*\\]");
 		matcher = pattern.matcher(firstLine);
 		matcher.find();
 		String threadName = firstLine.substring(matcher.start(), matcher.end());
 		threadName = threadName.substring(1, threadName.length() - 1);
 		firstLine = firstLine.delete(0, matcher.end());
 
-		String endLoggerNameRegex = " - ";
-		pattern = Pattern.compile(endLoggerNameRegex);
+		pattern = Pattern.compile(" - ");
 		matcher = pattern.matcher(firstLine);
 		matcher.find();
 		String loggerName = firstLine.substring(1, matcher.end() - 3);
 		firstLine = firstLine.delete(0, matcher.end());
 
 		lines.add(firstLine.toString());
+		
+		if(message.size() > 1) {
+			for(int i = 2; i < message.size(); i++) {
+				lines.add(message.get(i));
+			}
+		}
+		
+		boolean expandRequired = false; //TODO actually deal with this properly
 
-		addMessageReadLine(currentLine);
-		positionSaver = currentPosition;
+		System.out.println("Message: " + currentMessage + "; line: " + startRow + "."); //TODO: remove
 
-		while (true) {
+		return new LogMessage(startRow, timestamp, logLevel, threadName, loggerName, lines, expandRequired);
+	}
+	
+	public LogMessage readMessage0() {
+		return convertMessageFromListToLogMessage(readMessage());
+	}
+	
+	private List<String> readMessage() {
+		int startRow = currentLine;
+		StringBuffer line = new StringBuffer();
+		long positionSaver = currentPosition;
+		List<String> lines = new ArrayList<>();
+		
+		addMessageReadInitPosition(currentPosition);
+		// positionSaver = currentPosition;
+
+		lines.add(String.valueOf(startRow));
+		
+		do {
+			positionSaver = currentPosition;
+			line = readLine();
+			if (line == null) {
+				break;
+			} else {
+				lines.add(line.toString());
+			}
+		} while ( ! isStartOfMessage(line) );
+		
+		
+/*		while (true) {
 			line = readLine();
 			if ( line == null ) {
 				break;
@@ -189,10 +215,9 @@ public class Log4jFileParser implements LogFileParser {
 				break;
 			}
 		}
-
+*/
 		currentMessage++;
-		System.out.println("Message: " + currentMessage + "; line: " + getLastMessageLineRead() + "."); // DEBUG: messageNumber getLastMessageLineRead in readMessage.
-		return new LogMessage(startRow, timestamp, logLevel, threadName, loggerName, lines, expandRequired);
+		return lines;
 	}
 
 	private boolean isStartOfMessage(StringBuffer line) {
@@ -201,51 +226,53 @@ public class Log4jFileParser implements LogFileParser {
 		return line == null ? false : matcher.find();
 	}
 
-	private boolean isExpressionFound(StringBuffer message, String expression, boolean useRegex) {
+	private boolean isExpressionFound(List<String> message, String expression, boolean useRegex) {
 		Pattern pattern;
 		if( useRegex ) {
 			pattern = Pattern.compile(expression);
-			Matcher matcher = pattern.matcher(message);
-			return message == null ? false : matcher.find();
+			Matcher matcher;
+			for(String line : message) {
+				matcher = pattern.matcher(line);
+				if(line == null) {
+					continue;
+				} else {
+					if(matcher.find()) return true;
+				}
+			}
+			return false;
 		} else {
-			return message.indexOf(expression) != -1;
+			for(String line : message) {
+				if(line.indexOf(expression) == - 1) {
+					continue;
+				} else {
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 	
-	private StringBuffer convertLogMessageToStringBuffer(LogMessage logMessage) {
-		SimpleDateFormat sdf = new SimpleDateFormat(timestampFormat);
-		StringBuffer message = new StringBuffer();
-		message.append(logMessage.getStartRow() + ": " + sdf.format(logMessage.getTimestamp()) + " [" + logMessage.getLogLevel() + "] - " + logMessage.getLoggerName() + " - " + logMessage.getMessage());
-
-		for(String line : logMessage.getFullMessage()) {
-			message.append(line); //TODO
-		}
-			
-		return message;
+	public LogMessage prevMessage0() {
+		return convertMessageFromListToLogMessage(prevMessage());
 	}
 	
-	public LogMessage prevMessage(){
+	private List<String> prevMessage(){
 		currentMessage--;
 		if (currentMessage <= 0) {
 			currentMessage++;
 			return null;
 		}
-		currentLine = messageLines.get(currentMessage).value;
-		setPosition(linePositions.get(currentLine).value);
-		LogMessage message = readMessage();
+		setPosition(messageInitPositions.get(currentMessage));
+		List<String> message = readMessage();
 		currentMessage--;
 		return message;
 	}
 
 	public void testingRegisters(){
 		// DEBUG: testingRegisters.
-		System.out.println("line:");
-		for (LongHolder l : linePositions) {
-			System.out.println(l.value);
-		}
-		System.out.println("message:");
-		for (IntHolder i : messageLines) {
-			System.out.println(i.value);
+		System.out.println("Begin of Message position:");
+		for (Long l : messageInitPositions) {
+			System.out.println(l);
 		}
 
 	}
@@ -281,7 +308,7 @@ public class Log4jFileParser implements LogFileParser {
 		if ( offset((int) currentMessage) ) { // se ad esempio � 0, non ne salta. Current message � adesso l'ultimo non letto.
 			List<LogMessage> messageList = new ArrayList<>((int) pageSize);
 			for (long l = 0; l < pageSize; l++) {
-				messageList.add(readMessage());
+				messageList.add(convertMessageFromListToLogMessage(readMessage()));
 			}
 			PageImpl<LogMessage> messagePage = new PageImpl<>();
 			messagePage.setData(messageList);

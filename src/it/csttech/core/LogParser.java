@@ -61,7 +61,7 @@ public class LogParser {
 
 	private static void readmessageMethod(int arg){
 		for (int i = 0; i < arg; i++) {
-			printMessage(otherParser.readMessage());
+			printMessage(otherParser.readMessage0());
 		}
 	}
 
@@ -105,15 +105,15 @@ public class LogParser {
 
 	private static LogMessage basicOperation(String direction){
 		switch(direction){
-		case "-1": return otherParser.prevMessage();
-		case "1": return otherParser.readMessage();
+		case "-1": return otherParser.prevMessage0();
+		case "1": return otherParser.readMessage0();
 		default: return null;
 		}
 	}
 
 	private static boolean offSet(int lineNumber){
 		for (int i = 0 ; i < lineNumber; i++) {
-			if(otherParser.readMessage() == null){
+			if(otherParser.readMessage0() == null){
 				return false;
 			}
 		}
@@ -145,7 +145,7 @@ public class LogParser {
 //	@SuppressWarnings("unused")
 	private static void printMessage(LogMessage message){
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS");
-		System.out.println(message.getStartRow() + ": " + sdf.format(message.getTimestamp()) + " [" +message.getLogLevel() + "] - " + message.getLoggerName() + " - " + message.getMessage());
+		System.out.print(message.getStartRow() + ": " + sdf.format(message.getTimestamp()) + " [" +message.getLogLevel() + "] - " + message.getLoggerName());
 		for (String s : message.getFullMessage()) {
 			System.out.print(s);
 		}
