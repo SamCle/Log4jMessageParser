@@ -201,21 +201,6 @@ public class Log4jFileParser implements LogFileParser {
 			}
 		} while ( ! isStartOfMessage(line) );
 		
-		
-/*		while (true) {
-			line = readLine();
-			if ( line == null ) {
-				break;
-			} else if ( ! isStartOfMessage(line) ) {
-				lines.add(line.toString());
-				positionSaver = currentPosition;
-			} else {
-				setPosition( positionSaver );
-				currentLine--;
-				break;
-			}
-		}
-*/
 		currentMessage++;
 		return lines;
 	}
