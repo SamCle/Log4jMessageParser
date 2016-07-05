@@ -38,7 +38,7 @@ public class LogParser {
 				break;
 			case "readcommanded":
 				readcommandedMethod();
-				//otherParser.testingRegisters();
+				otherParser.testingRegisters();
 				break;
 			case "readrandom":
 				readrandomMethod(100, 10); // hardcoded
@@ -103,11 +103,16 @@ public class LogParser {
 	}
 */
 	private static void readcommandedMethod(){
-		System.out.println("Finding next page, when current position is 5, against the string literal 'as':");
-		printPage(otherParser.findNext("as", false, 5, 25));
-		System.out.println("Printing next page, when current position is 50:");
-		printPage(otherParser.nextPage(50, 25));
-		
+		System.out.println("Printing next page (of size 25), when current position is 2329:");
+		printPage(otherParser.nextPage(0, 25));
+		System.out.println("Printing previous page (of size 25), when current position is 50:");		
+		printPage(otherParser.prevPage(50, 25));
+		System.out.println("Finding next page (of size 25), when current position is 5, against the string literal 'as':");
+		printPage(otherParser.findNext("as", false, 2, 25));
+		System.out.println("Printing previous page (of size 25), when current position is 50, against the string literal 'BCryptPasswordEncoder' in [system]':");		
+		printPage(otherParser.findPrev("BCryptPasswordEncoder' in [system]", false, 50, 25));
+//		System.out.println("Printing next filtered page (of size 25), when current position is 0, against the string literal 'ERROR':");		
+//		printPage(otherParser.filterNext("ERROR", false, 0, 25));
 	}
 
 	
