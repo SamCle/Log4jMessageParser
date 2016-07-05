@@ -28,8 +28,9 @@ public class Log4jFileParser implements LogFileParser {
 	private String regex, timestampFormat;
 	private Path file;
 	private long currentPosition; 
-	private long beginningOfMessages; //stores the actual beginning of messages in the input file. Most likely it will be 0, unless the user provides a file that has been cut without care
+	private long beginningOfMessages; //stores the actual beginning of messages in the input file (as character). Most likely it will be 0, unless the user provides a file that has been cut without care
 	private int currentLine, currentMessage;
+	private int startingLineOfMessages; //stores the actual beginning of messages in the input file (as line). Most likely it will be 0, unless the user provides a file that has been cut without care
 	private List<Long> messageInitPositions;
 
 	public Log4jFileParser(String filename) {
@@ -53,9 +54,8 @@ public class Log4jFileParser implements LogFileParser {
 		} while ( ! isStartOfMessage(line) ); // Start of message found! Update of currentPosition is done in the readLine method itself
 		
 		this.currentPosition = positionSaver;
+		this.startingLineOfMessages = currentLine; 
 		this.beginningOfMessages = positionSaver;
-		
-		this.currentLine = 0;
 		this.currentMessage = 0;
 		this.messageInitPositions = new ArrayList<Long>();
 		messageInitPositions.add(new Long(-1));
@@ -146,7 +146,7 @@ public class Log4jFileParser implements LogFileParser {
 		
 		StringBuffer firstLine = new StringBuffer(message.get(1));
 		
-		//System.out.println("Reading the first line."); //TODO remove
+		// System.out.println("Reading the first line."); //TODO remove
 		Date timestamp = new SimpleDateFormat(timestampFormat).parse(firstLine.toString(), new ParsePosition(0));
 		firstLine = firstLine.delete(0, timestampFormat.length());
 		
@@ -191,12 +191,12 @@ public class Log4jFileParser implements LogFileParser {
 	}
 	
 	/**
-	 * This method reads a full Log4j message, by calling repeteadly the readLine method.
+	 * This method reads a full Log4j message, by calling repeatedly the readLine method. We always assume we are at the beginning of a message.
 	 * 
 	 * @return the full message as a List<String>, or null iff the EOF was already reached.
 	 */
 	private List<String> readMessage() {
-		int startRow = currentLine + 1; //TODO: ...
+		int startRow = currentLine; //TODO: ...
 		StringBuffer line = new StringBuffer();
 		long positionSaver = currentPosition; //TODO: maybe it's not needed
 		List<String> lines = new ArrayList<>();
@@ -219,6 +219,23 @@ public class Log4jFileParser implements LogFileParser {
 		} else {
 			lines.add(0, String.valueOf(startRow));
 			currentMessage++;
+
+			positionSaver = currentPosition;
+
+			while (true) {
+				line = readLine();
+				if ( line == null ) {
+					break;
+				} else if ( ! isStartOfMessage(line) ) {
+					lines.add(line.toString());
+					positionSaver = currentPosition;
+				} else {
+					setPosition( positionSaver );
+					currentLine--;
+					break;
+				}
+			}
+			
 			return lines;
 		}
 	}
@@ -287,10 +304,10 @@ public class Log4jFileParser implements LogFileParser {
 
 	}
 
-	private boolean positionsAreSet(int messageNumber) {
+	private boolean arePositionsSet(int messageNumber) {
 		//Next three lines reposition at BOF
-		currentPosition = 0L; 
-		currentLine = 0;
+		currentPosition = beginningOfMessages; 
+		currentLine = startingLineOfMessages;
 		currentMessage = 0;
 		//TODO exploit the MessageInitPositions vectors to set directly the position if it has already been passed before
 		for (int i = 0 ; i < messageNumber; i++) {
@@ -318,7 +335,7 @@ public class Log4jFileParser implements LogFileParser {
 	 */
 	@Override
 	public Page<LogMessage> findNext(String expression, boolean useRegex, long currentMessage, long pageSize) {
-		if (positionsAreSet((int) currentMessage)) { // se ad esempio � 0, non ne salta. Current message � adesso l'ultimo non letto.
+		if (arePositionsSet((int) currentMessage)) { // se ad esempio � 0, non ne salta. Current message � adesso l'ultimo non letto.
 			List<LogMessage> messageList = new ArrayList<>((int) pageSize);
 			PageImpl<LogMessage> messagePage = new PageImpl<>();
 			
@@ -366,7 +383,7 @@ public class Log4jFileParser implements LogFileParser {
 	@Override
 	public Page<LogMessage> filterNext(String expression, boolean useRegex, long currentMessage, long pageSize) {
 		//TODO change
-		if (positionsAreSet((int) currentMessage)) { // se ad esempio � 0, non ne salta. Current message � adesso l'ultimo non letto.
+		if (arePositionsSet((int) currentMessage)) { // se ad esempio � 0, non ne salta. Current message � adesso l'ultimo non letto.
 			List<LogMessage> messageList = new ArrayList<>((int) pageSize);
 			PageImpl<LogMessage> messagePage = new PageImpl<>();
 			

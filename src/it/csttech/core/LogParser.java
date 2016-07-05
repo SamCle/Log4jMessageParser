@@ -22,7 +22,7 @@ public class LogParser {
 		boolean condition = true; // hardcoded
 		if (condition) {
 			scanner = new Scanner(System.in);
-			String testingMode = "readcommanded"; // hardcoded
+			String testingMode = "readPages"; // hardcoded
 			REGEX = "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]{3}"; // hardcoded
 			String timestampFormat = "yyyy-MM-dd HH:mm:ss,SSS";
 			//                        2016-05-16 11:08:29,492
@@ -43,6 +43,9 @@ public class LogParser {
 			case "readrandom":
 				readrandomMethod(100, 10); // hardcoded
 				otherParser.testingRegisters();
+				break;
+			case "readpages":
+				readpagesMethod();
 				break;
 			default:
 				exmain();
@@ -80,7 +83,7 @@ public class LogParser {
 		return;
 	}
 
-/*	private static void readcommandedMethod(){
+	private static void readcommandedMethod(){
 		String newInput;
 		LogMessage output;
 		for (;;) {
@@ -101,10 +104,10 @@ public class LogParser {
 			printMessage(output);
 		}
 	}
-*/
-	private static void readcommandedMethod(){
+
+	private static void readpagesMethod(){
 		System.out.println("Printing next page (of size 25), when current position is 2329:");
-		printPage(otherParser.nextPage(0, 25));
+		printPage(otherParser.nextPage(899, 25));
 		System.out.println("Printing previous page (of size 25), when current position is 50:");		
 		printPage(otherParser.prevPage(50, 25));
 		System.out.println("Finding next page (of size 25), when current position is 5, against the string literal 'as':");
@@ -160,7 +163,7 @@ public class LogParser {
 //	@SuppressWarnings("unused")
 	private static void printMessage(LogMessage message){
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS");
-		System.out.print(message.getStartRow() + ": " + sdf.format(message.getTimestamp()) + " [" +message.getLogLevel() + "] - " + message.getLoggerName());
+		System.out.print(message.getStartRow() + ": " + sdf.format(message.getTimestamp()) + " [" +message.getLogLevel() + "] - " + message.getLoggerName() + " - ");
 		for (String s : message.getFullMessage()) {
 			System.out.print(s);
 		}
