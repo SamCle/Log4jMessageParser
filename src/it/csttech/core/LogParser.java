@@ -38,7 +38,7 @@ public class LogParser {
 				break;
 			case "readcommanded":
 				readcommandedMethod();
-				otherParser.testingRegisters();
+				//otherParser.testingRegisters();
 				break;
 			case "readrandom":
 				readrandomMethod(100, 10); // hardcoded
@@ -80,7 +80,7 @@ public class LogParser {
 		return;
 	}
 
-	private static void readcommandedMethod(){
+/*	private static void readcommandedMethod(){
 		String newInput;
 		LogMessage output;
 		for (;;) {
@@ -101,8 +101,18 @@ public class LogParser {
 			printMessage(output);
 		}
 	}
+*/
+	private static void readcommandedMethod(){
+		System.out.println("Finding next page, when current position is 5, against the string literal 'as':");
+		printPage(otherParser.findNext("as", false, 5, 25));
+		System.out.println("Printing next page, when current position is 50:");
+		printPage(otherParser.nextPage(50, 25));
+		
+	}
 
-
+	
+	
+	
 	private static LogMessage basicOperation(String direction){
 		switch(direction){
 		case "-1": return otherParser.prevMessage0();
@@ -148,6 +158,12 @@ public class LogParser {
 		System.out.print(message.getStartRow() + ": " + sdf.format(message.getTimestamp()) + " [" +message.getLogLevel() + "] - " + message.getLoggerName());
 		for (String s : message.getFullMessage()) {
 			System.out.print(s);
+		}
+	}
+	
+	private static void printPage(Page<LogMessage> page) {
+		for(LogMessage message : page.getData()) {
+			printMessage(message);
 		}
 	}
 
