@@ -298,6 +298,30 @@ public class Log4jFileParser implements LogFileParser {
 		return true;
 	}
 
+	
+/*	private boolean arePositionsSet(int messageNumber) {
+		if(messageNumber < messageInitPositions.size()) {
+			//This happens if we have already stored all position info about the message referenced by the user; we exploit this
+			currentMessage = messageNumber; 
+			currentPosition = messageInitPositions.get(messageNumber);
+			currentLine = messageInitLines.get(messageNumber);
+			return true;
+		} else {
+			//Then we need to navigate the whole file; next three lines reposition at BOF
+			currentPosition = beginningOfMessages; 
+			currentLine = startingLineOfFirstMessage;
+			currentMessage = 0;
+
+			for (int i = 0 ; i < messageNumber; i++) {
+				if(nextMessage() == null) { // This only happens if we have already reached the EOF
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+*/
+	
 	@Override
 	public Page<LogMessage> nextPage(long currentMessage, long pageSize) {
 		return findNext("", true, currentMessage, pageSize);
