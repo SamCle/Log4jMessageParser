@@ -22,11 +22,11 @@ public class LogParser {
 		boolean condition = true; // hardcoded
 		if (condition) {
 			scanner = new Scanner(System.in);
-			String testingMode = "readPages"; // hardcoded
+			String testingMode = "readpages"; // hardcoded
 			REGEX = "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]{3}"; // hardcoded
 			String timestampFormat = "yyyy-MM-dd HH:mm:ss,SSS";
 			//                        2016-05-16 11:08:29,492
-			FILE_NAME = "input/inputDoubled.log"; // hardcoded
+			FILE_NAME = "input/input.log"; // hardcoded
 			otherParser = new Log4jFileParser(FILE_NAME,REGEX,timestampFormat);
 			switch (testingMode.toLowerCase()) {
 			case "readline":
@@ -46,6 +46,9 @@ public class LogParser {
 				break;
 			case "readpages":
 				readpagesMethod();
+				break;
+			case "readsingle":
+				printPage(otherParser.nextPage(0, 25)); // hardcoded
 				break;
 			default:
 				exmain();
@@ -106,14 +109,14 @@ public class LogParser {
 	}
 
 	private static void readpagesMethod(){
-		System.out.println("Printing next page (of size 25), when current position is 2329:");
+		System.out.println("Printing next page (of size 25), when current position is 899:");
 		printPage(otherParser.nextPage(899, 25));
 		System.out.println("Printing previous page (of size 25), when current position is 50:");		
 		printPage(otherParser.prevPage(50, 25));
-		System.out.println("Finding next page (of size 25), when current position is 5, against the string literal 'as':");
-		printPage(otherParser.findNext("as", false, 2, 25));
-		System.out.println("Printing previous page (of size 25), when current position is 50, against the string literal 'BCryptPasswordEncoder' in [system]':");		
-		printPage(otherParser.findPrev("BCryptPasswordEncoder' in [system]", false, 50, 25));
+		System.out.println("Finding next page (of size 25), when current position is 5, against the string literal '2016-05-16 11:08:31,579':");
+		printPage(otherParser.findNext("2016-05-16 11:08:31,579", false, 5, 25));
+		System.out.println("Printing previous page (of size 25), when current position is 50, against the string literal 'BCryptPasswordEncoder':");		
+		printPage(otherParser.findPrev("BCryptPasswordEncoder", false, 50, 25));
 //		System.out.println("Printing next filtered page (of size 25), when current position is 0, against the string literal 'ERROR':");		
 //		printPage(otherParser.filterNext("ERROR", false, 0, 25));
 	}
@@ -142,8 +145,6 @@ public class LogParser {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS");
 
 		System.out.println("Start");
-
-		//TODO: replace with real implementation.
 		parser = new DummyLogFileParser();
 
 		long offset = 0;
