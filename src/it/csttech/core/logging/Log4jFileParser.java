@@ -328,6 +328,8 @@ public class Log4jFileParser implements LogFileParser {
 	public Page<LogMessage> findNext(String expression, boolean useRegex, long currentMessage, long pageSize) {
 		if (arePositionsSet((int) currentMessage)) { //We set all positions to the one passed by the user
 			List<String> message;
+			List<LogMessage> messageList = new ArrayList<>();
+
 			while (true) {
 				message = nextMessage();
 				if(message == null) {
@@ -338,7 +340,14 @@ public class Log4jFileParser implements LogFileParser {
 			}
 			this.currentLine = messageInitLines.get(this.currentMessage);
 			this.currentPosition = messageInitPositions.get(this.currentMessage);
-			return generatePage(pageSize);
+				
+			for(int counter = 0; counter < pageSize; counter++) {
+				message = nextMessage();
+				if (message == null) break; //EOF was reached while populating messageList
+				messageList.add(convertMessageFromListToLogMessage(message));
+			}
+			
+			return generatePage(messageList, currentMessage, 1L, 1L, 0L); //FIXME: dummy values are used here
 		} else {
 			return null; //This only happens if the EOF was reached when setting the position given by the user
 		}
@@ -352,6 +361,8 @@ public class Log4jFileParser implements LogFileParser {
 	public Page<LogMessage> findPrev(String expression, boolean useRegex, long currentMessage, long pageSize) {
 		if (arePositionsSet((int) currentMessage)) { //We set all positions to the one passed by the user
 			List<String> message;
+			List<LogMessage> messageList = new ArrayList<>();
+			
 			while (true) {
 				message = prevMessage();
 				if(message == null) {
@@ -362,7 +373,14 @@ public class Log4jFileParser implements LogFileParser {
 			}
 			this.currentLine = messageInitLines.get(this.currentMessage);
 			this.currentPosition = messageInitPositions.get(this.currentMessage);
-			return generatePage(pageSize);
+			
+			for(int counter = 0; counter < pageSize; counter++) {
+				message = nextMessage();
+				if (message == null) break; //EOF was reached while populating messageList
+				messageList.add(convertMessageFromListToLogMessage(message));
+			}
+			
+			return generatePage(messageList, currentMessage, 1L, 1L, 0L); //FIXME: dummy values are used here
 		} else {
 			return null; //TODO: check whether this ever happens; note that arePositionsSet returns null iff the end of file was reached when attempting to set the position given by the user
 		}
@@ -375,10 +393,8 @@ public class Log4jFileParser implements LogFileParser {
 	@Override
 	public Page<LogMessage> filterNext(String expression, boolean useRegex, long currentMessage, long pageSize) {
 		if (arePositionsSet((int) currentMessage)) { // We set all positions to the one passed by the user
-			List<LogMessage> messageList = new ArrayList<>((int) pageSize);
-			PageImpl<LogMessage> messagePage = new PageImpl<>();
-
 			List<String> message;
+			List<LogMessage> messageList = new ArrayList<>();
 
 			populate: 
 				for(int counter = 0; counter < pageSize; counter ++) {
@@ -397,13 +413,7 @@ public class Log4jFileParser implements LogFileParser {
 					messageList.add(convertMessageFromListToLogMessage(message));
 				}
 
-			messagePage.setData(messageList);
-			messagePage.setOffset(currentMessage);
-			messagePage.setCurrentPage(1L);
-			messagePage.setPageSize(pageSize);
-			messagePage.setTotalPages(1L);
-			messagePage.setTotalCount(0L); // TODO: chiarire questo campo.
-			return messagePage;
+			return generatePage(messageList, currentMessage, 1L, 1L, 0L); //FIXME: dummy values are used here
 		} else {
 			return null;
 		}
@@ -416,11 +426,8 @@ public class Log4jFileParser implements LogFileParser {
 	@Override
 	public Page<LogMessage> filterPrev(String expression, boolean useRegex, long currentMessage, long pageSize) {
 		if (arePositionsSet((int) currentMessage)) { //We set all positions to the one passed by the user
-			List<LogMessage> messageList = new ArrayList<>((int) pageSize);
-			PageImpl<LogMessage> messagePage = new PageImpl<>();
-
-			
 			List<String> message;
+			List<LogMessage> messageList = new ArrayList<>();
 
 			int counter;
 			populate: 
@@ -439,41 +446,25 @@ public class Log4jFileParser implements LogFileParser {
 					}
 					messageList.add(convertMessageFromListToLogMessage(message));
 				}
-			
 			Collections.reverse(messageList); //Messages have already been read, but in reverse order: therefore we reorder them correctly here
-			messagePage.setData(messageList);
-			messagePage.setOffset(currentMessage);
-			messagePage.setCurrentPage(1L);
-			messagePage.setPageSize(pageSize);
-			messagePage.setTotalPages(1L);
-			messagePage.setTotalCount(0L); // TODO: chiarire questo campo.
-			return messagePage;
+			
+			return generatePage(messageList, currentMessage, 1L, 1L, 0L); //FIXME: dummy values are used here
 		} else {
 			return null;
 		}
 	}
-
-	private Page<LogMessage> generatePage(long pageSize) {
-		List<LogMessage> messageList = new ArrayList<>((int) pageSize);
+	
+	private Page<LogMessage> generatePage(List<LogMessage> messageList, long currentMessage, long currentPage, long totalPages, long totalCount) {
 		PageImpl<LogMessage> messagePage = new PageImpl<>();
-	
-		List<String> message;
-	
-		for(int counter = 0; counter < pageSize; counter++) {
-			message = nextMessage();
-			if (message == null) break; //EOF was reached while populating messageList
-			messageList.add(convertMessageFromListToLogMessage(message));
-		}
-		//TODO: these next lines are repeated many times: find a practical way to avoid this.
+
 		messagePage.setData(messageList);
 		messagePage.setOffset(currentMessage);
 		messagePage.setCurrentPage(1L);
-		messagePage.setPageSize(pageSize);
+		messagePage.setPageSize(messageList.size());
 		messagePage.setTotalPages(1L);
 		messagePage.setTotalCount(0L); // TODO: chiarire questo campo.
 		return messagePage;
 	}
-
 	@Override
 	public boolean hasTimestamp() {
 		return true;
