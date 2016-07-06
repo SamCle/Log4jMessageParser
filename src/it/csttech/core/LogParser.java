@@ -29,7 +29,7 @@ public class LogParser {
 			FILE_NAME = "input/input.log"; // hardcoded
 			otherParser = new Log4jFileParser(FILE_NAME,REGEX,timestampFormat);
 			switch (testingMode.toLowerCase()) {
-			case "readline":
+/*			case "readline":
 				readlineMethod(10); // hardcoded
 				break;
 			case "readmessage":
@@ -44,7 +44,7 @@ public class LogParser {
 				readrandomMethod(100, 10); // hardcoded
 				otherParser.testingRegisters();
 				break;
-			case "readpages":
+*/			case "readpages":
 				readpagesMethod();
 				break;
 			case "readsingle":
@@ -59,19 +59,19 @@ public class LogParser {
 		}
 	}
 
-	private static void readlineMethod(int arg){
+/*	private static void readlineMethod(int arg){
 		for (int i = 0; i < arg; i++) {
 			System.out.println(otherParser.readLine());
 		}
 	} 
-
-	private static void readmessageMethod(int arg){
+*/
+/*	private static void readmessageMethod(int arg){
 		for (int i = 0; i < arg; i++) {
 			printMessage(otherParser.readMessage0());
 		}
 	}
-
-	private static void readrandomMethod(int offset, int size){
+*/
+/*	private static void readrandomMethod(int offset, int size){
 		if (offSet(offset)) {
 			return;
 		}
@@ -85,8 +85,8 @@ public class LogParser {
 		}
 		return;
 	}
-
-	private static void readcommandedMethod(){
+*/
+/*	private static void readcommandedMethod(){
 		String newInput;
 		LogMessage output;
 		for (;;) {
@@ -107,32 +107,34 @@ public class LogParser {
 			printMessage(output);
 		}
 	}
-
+*/
 	private static void readpagesMethod(){
-		System.out.println("Printing next page (of size 25), when current position is 899:");
-		printPage(otherParser.nextPage(899, 25));
-		System.out.println("Printing previous page (of size 25), when current position is 50:");		
-		printPage(otherParser.prevPage(50, 25));
-		System.out.println("Finding next page (of size 25), when current position is 5, against the string literal '2016-05-16 11:08:31,579':");
-		printPage(otherParser.findNext("2016-05-16 11:08:31,579", false, 5, 25));
-		System.out.println("Printing previous page (of size 25), when current position is 50, against the string literal 'BCryptPasswordEncoder':");		
-		printPage(otherParser.findPrev("BCryptPasswordEncoder", false, 50, 25));
-//		System.out.println("Printing next filtered page (of size 25), when current position is 0, against the string literal 'ERROR':");		
-//		printPage(otherParser.filterNext("ERROR", false, 0, 25));
+		System.out.println("Printing next page (of size 5), when current position is 899:");
+		printPage(otherParser.nextPage(899, 5));
+		System.out.println("Printing previous page (of size 5), when current position is 50:");		
+		printPage(otherParser.prevPage(50, 5));
+		System.out.println("Finding next page (of size 5), when current position is 5, against the string literal '2016-05-16 11:08:31,579':");
+		printPage(otherParser.findNext("2016-05-16 11:08:31,579", false, 5, 5));
+		System.out.println("Printing previous page (of size 5), when current position is 50, against the string literal 'BCryptPasswordEncoder':");		
+		printPage(otherParser.findPrev("BCryptPasswordEncoder", false, 50, 5));
+		System.out.println("Printing next filtered page (of size 5), when current position is 10, against the string literal 'INFO':");		
+		printPage(otherParser.filterNext("INFO", false, 10, 5));
+		System.out.println("Printing previous filtered page (of size 5), when current position is 900, against the string literal 'DEBUG':");		
+		printPage(otherParser.filterPrev("DEBUG", false, 900, 5));
 	}
 
 	
 	
 	
-	private static LogMessage basicOperation(String direction){
+/*	private static LogMessage basicOperation(String direction){
 		switch(direction){
 		case "-1": return otherParser.prevMessage0();
 		case "1": return otherParser.readMessage0();
 		default: return null;
 		}
 	}
-
-	private static boolean offSet(int lineNumber){
+*/
+/*	private static boolean offSet(int lineNumber){
 		for (int i = 0 ; i < lineNumber; i++) {
 			if(otherParser.readMessage0() == null){
 				return false;
@@ -140,7 +142,7 @@ public class LogParser {
 		}
 		return true;
 	}
-
+*/
 	private static void exmain() {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS");
 
