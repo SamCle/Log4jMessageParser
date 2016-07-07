@@ -3,6 +3,7 @@ package it.csttech.core.logging;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -40,6 +41,10 @@ public class Log4jFileParser implements LogFileParser {
 		this.regex = regex;
 		file = Paths.get(filename);
 
+		if( !Files.exists(file) ) {// Then the file doesn't exist
+			throw new IllegalArgumentException("This file does not exist");
+		}
+		
 		currentPosition = 0L;
 		long positionSaver;
 		StringBuffer line = new StringBuffer();
@@ -180,6 +185,10 @@ public class Log4jFileParser implements LogFileParser {
 	}
 
 	private LogMessage convertMessageFromListToLogMessage(List<String> message) {
+		return convertMessageFromListToLogMessage(message, false, null, false);
+	}
+	
+	private LogMessage convertMessageFromListToLogMessage(List<String> message, boolean checkExpandRequired, String expression, boolean useRegex) {
 		int startRow = Integer.decode(message.get(0));
 		List<String> lines = new ArrayList<>();
 
@@ -214,7 +223,12 @@ public class Log4jFileParser implements LogFileParser {
 			}
 		}
 
-		boolean expandRequired = false; //TODO actually deal with this properly
+		boolean expandRequired;
+		if(message.size() == 2 || !checkExpandRequired) {
+			expandRequired = false;
+		} else {
+			expandRequired = isExpressionFound(message.subList(1, message.size()), expression, useRegex);
+		}
 
 		return new LogMessage(startRow, timestamp, logLevel, threadName, loggerName, lines, expandRequired);
 	}
@@ -338,6 +352,8 @@ public class Log4jFileParser implements LogFileParser {
 			List<String> message;
 			List<LogMessage> messageList = new ArrayList<>();
 
+			boolean checkExpandRequired = !expression.isEmpty();
+			
 			while (true) {
 				message = nextMessage();
 				if(message == null) {
@@ -352,7 +368,7 @@ public class Log4jFileParser implements LogFileParser {
 			for(int counter = 0; counter < pageSize; counter++) {
 				message = nextMessage();
 				if (message == null) break; //EOF was reached while populating messageList
-				messageList.add(convertMessageFromListToLogMessage(message));
+				messageList.add(convertMessageFromListToLogMessage(message, checkExpandRequired, expression, useRegex));
 			}
 
 			return generatePage(messageList, currentMessage, 1L, 1L, 0L); //FIXME: dummy values are used here
@@ -371,6 +387,8 @@ public class Log4jFileParser implements LogFileParser {
 			List<String> message;
 			List<LogMessage> messageList = new ArrayList<>();
 
+			boolean checkExpandRequired = !expression.isEmpty();
+			
 			while (true) {
 				message = prevMessage();
 				if(message == null) {
@@ -385,7 +403,7 @@ public class Log4jFileParser implements LogFileParser {
 			for(int counter = 0; counter < pageSize; counter++) {
 				message = nextMessage();
 				if (message == null) break; //EOF was reached while populating messageList
-				messageList.add(convertMessageFromListToLogMessage(message));
+				messageList.add(convertMessageFromListToLogMessage(message, checkExpandRequired, expression, useRegex));
 			}
 
 			return generatePage(messageList, currentMessage, 1L, 1L, 0L); //FIXME: dummy values are used here
@@ -403,6 +421,8 @@ public class Log4jFileParser implements LogFileParser {
 		if (arePositionsSet((int) currentMessage)) { // We set all positions to the one passed by the user
 			List<String> message;
 			List<LogMessage> messageList = new ArrayList<>();
+			
+			boolean checkExpandRequired = !expression.isEmpty();
 
 			populate: 
 				for(int counter = 0; counter < pageSize; counter ++) {
@@ -418,7 +438,7 @@ public class Log4jFileParser implements LogFileParser {
 							break;
 						}
 					}
-					messageList.add(convertMessageFromListToLogMessage(message));
+					messageList.add(convertMessageFromListToLogMessage(message, checkExpandRequired, expression, useRegex));
 				}
 
 			return generatePage(messageList, currentMessage, 1L, 1L, 0L); //FIXME: dummy values are used here
@@ -436,6 +456,8 @@ public class Log4jFileParser implements LogFileParser {
 		if (arePositionsSet((int) currentMessage)) { //We set all positions to the one passed by the user
 			List<String> message;
 			List<LogMessage> messageList = new ArrayList<>();
+			
+			boolean checkExpandRequired = !expression.isEmpty();
 
 			int counter;
 			populate: 
@@ -452,7 +474,7 @@ public class Log4jFileParser implements LogFileParser {
 							break;
 						}
 					}
-					messageList.add(convertMessageFromListToLogMessage(message));
+					messageList.add(convertMessageFromListToLogMessage(message, checkExpandRequired, expression, useRegex));
 				}
 			Collections.reverse(messageList); //Messages have already been read, but in reverse order: therefore we reorder them correctly here
 
