@@ -40,15 +40,16 @@ public class Log4jFileParser implements LogFileParser {
 		this.regex = regex;
 		file = Paths.get(filename);
 
+		currentPosition = 0L;
 		long positionSaver;
 		StringBuffer line = new StringBuffer();
 		do {
-			positionSaver = 0L;
+			positionSaver = currentPosition;
 			line = readLine();
 			if ( line == null ) { // Then it's EOF.
 				throw new IllegalArgumentException("This file does not contain any Log4j messages");
 			} else { }
-		} while ( ! isStartOfMessage(line) ); // Start of message found! Update of currentPosition is done in the readLine method itself
+		} while ( ! isStartOfMessage(line) ); // Start of message found!
 
 		currentPosition = positionSaver;
 		startingLineOfFirstMessage = currentLine; 
@@ -165,7 +166,6 @@ public class Log4jFileParser implements LogFileParser {
 	 * 
 	 * @return the full message as a List<String>, or null iff the BOF was already reached.
 	 */
-	//TODO: modify currentLine value???
 	private List<String> prevMessage() {
 		currentMessage--;
 		if (currentMessage <= 0) {
@@ -285,34 +285,30 @@ public class Log4jFileParser implements LogFileParser {
 	 * @return true if all positions were successfully set, false iff the end of file was reached
 	 */
 	private boolean arePositionsSet(int messageNumber) {
-		//Next three lines reposition at BOF
-		currentPosition = beginningOfMessages; 
-		currentLine = startingLineOfFirstMessage;
-		currentMessage = 0;
-		//TODO exploit the MessageInitPositions vectors to set directly the position if it has already been passed before
-		for (int i = 0 ; i < messageNumber; i++) {
-			if(nextMessage() == null) { // This only happens if we have already reached the EOF
-				return false;
-			}
-		}
-		return true;
-	}
-
-	
-/*	private boolean arePositionsSet(int messageNumber) {
-		if(messageNumber < messageInitPositions.size()) {
-			//This happens if we have already stored all position info about the message referenced by the user; we exploit this
-			currentMessage = messageNumber; 
-			currentPosition = messageInitPositions.get(messageNumber);
-			currentLine = messageInitLines.get(messageNumber);
-			return true;
-		} else {
-			//Then we need to navigate the whole file; next three lines reposition at BOF
+		if(messageNumber == 0 ) {
 			currentPosition = beginningOfMessages; 
 			currentLine = startingLineOfFirstMessage;
 			currentMessage = 0;
-
-			for (int i = 0 ; i < messageNumber; i++) {
+			return true;
+		} else if (messageNumber < messageInitPositions.size()) {
+			//This happens if we have already stored all position info about the message referenced by the user; we exploit this
+			currentPosition = messageInitPositions.get(messageNumber);
+			currentLine = messageInitLines.get(messageNumber);
+			currentMessage = messageNumber; 
+			return true;
+		} else {
+			//Then we need to navigate a section of the file
+			if(messageInitLines.size() == 1) { //Then we need to navigate the whole file; next three lines reposition at BOF
+ 				currentPosition = beginningOfMessages; 
+				currentLine = startingLineOfFirstMessage;
+				currentMessage = 0;
+			} else { //Then we already navigated a previous section of the file; next three lines reposition at the last message read
+				currentPosition = messageInitPositions.get(messageInitPositions.size()-1);
+				currentLine = messageInitLines.get(messageInitPositions.size()-1);
+				currentMessage = messageInitPositions.size()-2; 
+			}
+				
+			for (int i = currentMessage; i < messageNumber; i++) {
 				if(nextMessage() == null) { // This only happens if we have already reached the EOF
 					return false;
 				}
@@ -320,7 +316,7 @@ public class Log4jFileParser implements LogFileParser {
 			return true;
 		}
 	}
-*/
+
 	
 	@Override
 	public Page<LogMessage> nextPage(long currentMessage, long pageSize) {

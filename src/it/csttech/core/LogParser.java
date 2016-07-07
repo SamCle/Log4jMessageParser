@@ -111,8 +111,8 @@ public class LogParser {
 	private static void readpagesMethod() {
 		System.out.println("Printing next page (of size 5), when current position is 0:");
 		printPage(otherParser.nextPage(0, 5));
-		System.out.println("Printing next page (of size 5), when current position is 899:");
-		printPage(otherParser.nextPage(899, 5));
+		System.out.println("Printing next page (of size 5), when current position is 100:");
+		printPage(otherParser.nextPage(100, 5));
 		System.out.println("Printing previous page (of size 5), when current position is 50:");		
 		printPage(otherParser.prevPage(50, 5));
 		System.out.println("Finding next page (of size 5), when current position is 5, against the string literal '2016-05-16 11:08:31,579':");
