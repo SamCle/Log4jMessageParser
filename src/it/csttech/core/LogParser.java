@@ -109,18 +109,18 @@ public class LogParser {
 	}
 */
 	private static void readpagesMethod() {
-		System.out.println("Printing next page (of size 5), when current position is 0:");
-		printPage(otherParser.nextPage(0, 5));
-		System.out.println("\nPrinting next page (of size 5), when current position is 100:");
-		printPage(otherParser.nextPage(100, 5));
+//		System.out.println("Printing next page (of size 5), when current position is 0:");
+//		printPage(otherParser.nextPage(0, 5));
+//		System.out.println("\nPrinting next page (of size 5), when current position is 100:");
+//		printPage(otherParser.nextPage(100, 5));
 		System.out.println("\nPrinting previous page (of size 5), when current position is 50:");		
 		printPage(otherParser.prevPage(50, 5));
-		System.out.println("\nPrinting next page (of size 5), when current position is 5, against the string literal '2016-05-16 11:08:31,579':");
-		printPage(otherParser.findNext("2016-05-16 11:08:31,579", false, 5, 5));
+//		System.out.println("\nPrinting next page (of size 5), when current position is 5, against the string literal '2016-05-16 11:08:31,579':");
+//		printPage(otherParser.findNext("2016-05-16 11:08:31,579", false, 5, 5));
 		System.out.println("\nPrinting previous page (of size 5), when current position is 50, against the string literal 'BCryptPasswordEncoder':");		
 		printPage(otherParser.findPrev("BCryptPasswordEncoder", false, 50, 5));
-		System.out.println("\nPrinting next filtered page (of size 5), when current position is 10, against the string literal 'INFO':");		
-		printPage(otherParser.filterNext("INFO", false, 10, 5));
+//		System.out.println("\nPrinting next filtered page (of size 5), when current position is 10, against the string literal 'INFO':");		
+//		printPage(otherParser.filterNext("INFO", false, 10, 5));
 		System.out.println("\nPrinting previous filtered page (of size 5), when current position is 900, against the string literal 'DEBUG':");		
 		printPage(otherParser.filterPrev("DEBUG", false, 900, 5));
 		System.out.println("\nPrinting previous page (of size 5), when current position is 3:");		
@@ -182,8 +182,12 @@ public class LogParser {
 	}
 	
 	private static void printPage(Page<LogMessage> page) {
-		for(LogMessage message : page.getData()) {
-			printMessage(message);
+		if (page == null) {
+			System.out.println("NULL");
+		} else {
+			for(LogMessage message : page.getData()) {
+				printMessage(message);
+			}
 		}
 	}
 
