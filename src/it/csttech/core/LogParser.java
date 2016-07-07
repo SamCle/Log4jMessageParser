@@ -123,6 +123,12 @@ public class LogParser {
 		printPage(otherParser.filterNext("INFO", false, 10, 5));
 		System.out.println("\nPrinting previous filtered page (of size 5), when current position is 900, against the string literal 'DEBUG':");		
 		printPage(otherParser.filterPrev("DEBUG", false, 900, 5));
+		System.out.println("\nPrinting previous page (of size 5), when current position is 3:");		
+		printPage(otherParser.prevPage(3, 5));
+		System.out.println("\nPrinting previous page (of size 5), when current position is 3, agains the string literal '2016':");		
+		printPage(otherParser.findPrev("2016", false, 3, 5));
+		System.out.println("\nPrinting previous filtered page (of size 5), when current position is 3, agains the string literal '2016':");		
+		printPage(otherParser.filterPrev("2016", false, 7, 10));
 	}
 
 	

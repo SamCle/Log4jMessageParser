@@ -51,7 +51,7 @@ public class Log4jFileParser implements LogFileParser {
 		do {
 			positionSaver = currentPosition;
 			line = readLine();
-			if ( line == null ) { // Then it's EOF.
+			if( line == null ) { // Then it's EOF.
 				throw new IllegalArgumentException("This file does not contain any Log4j messages");
 			} else { }
 		} while ( ! isStartOfMessage(line) ); // Start of message found!
@@ -118,7 +118,7 @@ public class Log4jFileParser implements LogFileParser {
 			System.out.println("I/O Exception: " + e);
 			return null;
 		}
-		if (line != null) {
+		if(line != null) {
 			currentLine++;
 		}
 		return line;
@@ -141,7 +141,7 @@ public class Log4jFileParser implements LogFileParser {
 		addMessageReadInitLine(currentLine);
 
 		line = readLine();
-		if (line == null) {
+		if(line == null) {
 			return null; // It happens only at EOF.
 		} else {
 			lines.add(String.valueOf(startRow));
@@ -149,9 +149,9 @@ public class Log4jFileParser implements LogFileParser {
 			positionSaver = currentPosition;
 			while (true) {
 				line = readLine();
-				if ( line == null ) {
+				if( line == null ) {
 					break;
-				} else if ( ! isStartOfMessage(line) ) {
+				} else if( ! isStartOfMessage(line) ) {
 					lines.add(line.toString());
 					positionSaver = currentPosition;
 				} else {
@@ -173,7 +173,7 @@ public class Log4jFileParser implements LogFileParser {
 	 */
 	private List<String> prevMessage() {
 		currentMessage--;
-		if (currentMessage <= 0) {
+		if(currentMessage <= 0) {
 			currentMessage++;
 			return null;
 		}
@@ -182,10 +182,6 @@ public class Log4jFileParser implements LogFileParser {
 		List<String> message = nextMessage();
 		currentMessage--;
 		return message;
-	}
-
-	private LogMessage convertMessageFromListToLogMessage(List<String> message) {
-		return convertMessageFromListToLogMessage(message, false, null, false);
 	}
 	
 	private LogMessage convertMessageFromListToLogMessage(List<String> message, boolean checkExpandRequired, String expression, boolean useRegex) {
@@ -238,7 +234,7 @@ public class Log4jFileParser implements LogFileParser {
 	}
 
 	private boolean addMessageReadInitPosition(Long value) {
-		if ( value > getLastMessageInitPositionRead() ) {
+		if( value > getLastMessageInitPositionRead() ) {
 			messageInitPositions.add(value);
 			return true;
 		}
@@ -250,7 +246,7 @@ public class Log4jFileParser implements LogFileParser {
 	}
 
 	private boolean addMessageReadInitLine(Integer value) {
-		if ( value > getLastMessageInitLineRead() ) {
+		if( value > getLastMessageInitLineRead() ) {
 			messageInitLines.add(value);
 			return true;
 		}
@@ -304,7 +300,7 @@ public class Log4jFileParser implements LogFileParser {
 			currentLine = startingLineOfFirstMessage;
 			currentMessage = 0;
 			return true;
-		} else if (messageNumber < messageInitPositions.size()) {
+		} else if(messageNumber < messageInitPositions.size()) {
 			//This happens if we have already stored all position info about the message referenced by the user; we exploit this
 			currentPosition = messageInitPositions.get(messageNumber);
 			currentLine = messageInitLines.get(messageNumber);
@@ -339,7 +335,11 @@ public class Log4jFileParser implements LogFileParser {
 
 	@Override
 	public Page<LogMessage> prevPage(long currentMessage, long pageSize) {
-		return findPrev("", true, currentMessage - pageSize + 1, pageSize);
+		if(pageSize > currentMessage) { //Then we just print the first page and that's it
+			return findNext("", true, 0, pageSize);
+		} else { 
+			return findPrev("", true, currentMessage - pageSize + 1, pageSize);
+		}
 	}
 
 	/*
@@ -348,7 +348,7 @@ public class Log4jFileParser implements LogFileParser {
 	 */
 	@Override
 	public Page<LogMessage> findNext(String expression, boolean useRegex, long currentMessage, long pageSize) {
-		if (arePositionsSet((int) currentMessage)) { //We set all positions to the one passed by the user
+		if(arePositionsSet((int) currentMessage)) { //We set all positions to the one passed by the user
 			List<String> message;
 			List<LogMessage> messageList = new ArrayList<>();
 
@@ -358,7 +358,7 @@ public class Log4jFileParser implements LogFileParser {
 				message = nextMessage();
 				if(message == null) {
 					return null; //EOF was reached while trying to match the expression and the messages
-				} else if (isExpressionFound(message, expression, useRegex)) {
+				} else if(isExpressionFound(message, expression, useRegex)) {
 					break;
 				}
 			}
@@ -367,7 +367,7 @@ public class Log4jFileParser implements LogFileParser {
 
 			for(int counter = 0; counter < pageSize; counter++) {
 				message = nextMessage();
-				if (message == null) break; //EOF was reached while populating messageList
+				if(message == null) break; //EOF was reached while populating messageList
 				messageList.add(convertMessageFromListToLogMessage(message, checkExpandRequired, expression, useRegex));
 			}
 
@@ -383,7 +383,7 @@ public class Log4jFileParser implements LogFileParser {
 	 */
 	@Override
 	public Page<LogMessage> findPrev(String expression, boolean useRegex, long currentMessage, long pageSize) {
-		if (arePositionsSet((int) currentMessage)) { //We set all positions to the one passed by the user
+		if(arePositionsSet((int) currentMessage)) { //We set all positions to the one passed by the user
 			List<String> message;
 			List<LogMessage> messageList = new ArrayList<>();
 
@@ -393,7 +393,7 @@ public class Log4jFileParser implements LogFileParser {
 				message = prevMessage();
 				if(message == null) {
 					return null; //BOF was reached while trying to match the expression and the messages
-				} else if (isExpressionFound(message, expression, useRegex)) {
+				} else if(isExpressionFound(message, expression, useRegex)) {
 					break;
 				}
 			}
@@ -402,7 +402,7 @@ public class Log4jFileParser implements LogFileParser {
 
 			for(int counter = 0; counter < pageSize; counter++) {
 				message = nextMessage();
-				if (message == null) break; //EOF was reached while populating messageList
+				if(message == null) break; //EOF was reached while populating messageList
 				messageList.add(convertMessageFromListToLogMessage(message, checkExpandRequired, expression, useRegex));
 			}
 
@@ -418,7 +418,7 @@ public class Log4jFileParser implements LogFileParser {
 	 */
 	@Override
 	public Page<LogMessage> filterNext(String expression, boolean useRegex, long currentMessage, long pageSize) {
-		if (arePositionsSet((int) currentMessage)) { // We set all positions to the one passed by the user
+		if(arePositionsSet((int) currentMessage)) { // We set all positions to the one passed by the user
 			List<String> message;
 			List<LogMessage> messageList = new ArrayList<>();
 			
@@ -434,7 +434,7 @@ public class Log4jFileParser implements LogFileParser {
 							} else {
 								break populate;
 							}
-						} else if (isExpressionFound(message, expression, useRegex)) {
+						} else if(isExpressionFound(message, expression, useRegex)) {
 							break;
 						}
 					}
@@ -453,7 +453,10 @@ public class Log4jFileParser implements LogFileParser {
 	 */
 	@Override
 	public Page<LogMessage> filterPrev(String expression, boolean useRegex, long currentMessage, long pageSize) {
-		if (arePositionsSet((int) currentMessage)) { //We set all positions to the one passed by the user
+		if(currentMessage < pageSize) { //Then we reposition in order to actually print pageSize-messages, if they match the filter, even if they occur further down in the file than currentMessage
+			currentMessage = pageSize + 1;
+		}
+		if(arePositionsSet((int) currentMessage)) { //We set all positions to the one passed by the user
 			List<String> message;
 			List<LogMessage> messageList = new ArrayList<>();
 			
@@ -470,7 +473,7 @@ public class Log4jFileParser implements LogFileParser {
 							} else {
 								break populate;
 							}
-						} else if (isExpressionFound(message, expression, useRegex)) {
+						} else if(isExpressionFound(message, expression, useRegex)) {
 							break;
 						}
 					}
