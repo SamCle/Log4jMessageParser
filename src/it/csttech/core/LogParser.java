@@ -113,22 +113,25 @@ public class LogParser {
 //		printPage(otherParser.nextPage(0, 5));
 //		System.out.println("\nPrinting next page (of size 5), when current position is 100:");
 //		printPage(otherParser.nextPage(100, 5));
-		System.out.println("\nPrinting previous page (of size 5), when current position is 50:");		
-		printPage(otherParser.prevPage(50, 5));
+//		System.out.println("\nPrinting previous page (of size 5), when current position is 50:");		
+//		printPage(otherParser.prevPage(50, 5));
 //		System.out.println("\nPrinting next page (of size 5), when current position is 5, against the string literal '2016-05-16 11:08:31,579':");
 //		printPage(otherParser.findNext("2016-05-16 11:08:31,579", false, 5, 5));
-		System.out.println("\nPrinting previous page (of size 5), when current position is 50, against the string literal 'BCryptPasswordEncoder':");		
-		printPage(otherParser.findPrev("BCryptPasswordEncoder", false, 50, 5));
+//		System.out.println("\nPrinting previous page (of size 5), when current position is 50, against the string literal 'BCryptPasswordEncoder':");		
+//		printPage(otherParser.findPrev("BCryptPasswordEncoder", false, 50, 5));
 //		System.out.println("\nPrinting next filtered page (of size 5), when current position is 10, against the string literal 'INFO':");		
 //		printPage(otherParser.filterNext("INFO", false, 10, 5));
-		System.out.println("\nPrinting previous filtered page (of size 5), when current position is 900, against the string literal 'DEBUG':");		
-		printPage(otherParser.filterPrev("DEBUG", false, 900, 5));
-		System.out.println("\nPrinting previous page (of size 5), when current position is 3:");		
-		printPage(otherParser.prevPage(3, 5));
-		System.out.println("\nPrinting previous page (of size 5), when current position is 3, agains the string literal '2016':");		
-		printPage(otherParser.findPrev("2016", false, 3, 5));
-		System.out.println("\nPrinting previous filtered page (of size 5), when current position is 3, agains the string literal '2016':");		
-		printPage(otherParser.filterPrev("2016", false, 7, 10));
+//		System.out.println("\nPrinting previous filtered page (of size 5), when current position is 900, against the string literal 'DEBUG':");		
+//		printPage(otherParser.filterPrev("DEBUG", false, 900, 5));
+//		System.out.println("\nPrinting previous page (of size 5), when current position is 3:");		
+//		printPage(otherParser.prevPage(3, 5));
+//		System.out.println("\nPrinting previous page (of size 5), when current position is 3, agains the string literal '2016':");		
+//		printPage(otherParser.findPrev("2016", false, 3, 5));
+//		System.out.println("\nPrinting previous filtered page (of size 5), when current position is 3, agains the string literal '2016':");		
+//		printPage(otherParser.filterPrev("2016", false, 7, 10));
+		System.out.println("\nPrinting next filtered page (of size 5), when current position is 10, against the string literal 'GabrielePichierri':");
+		printPage(otherParser.filterNext("GabrielePichierri", false, 10, 5));
+
 	}
 
 	

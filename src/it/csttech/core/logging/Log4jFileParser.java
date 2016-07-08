@@ -344,7 +344,7 @@ public class Log4jFileParser implements LogFileParser {
 
 	/*
 	 * 
-	 * @return the next page starting at a message containing the given expression, unless the end of file was reached when attempting to set the position given by the user
+	 * @return the next page starting at a message containing the given expression, which is empty if the end of file was reached when attempting to set the position given by the user
 	 */
 	@Override
 	public Page<LogMessage> findNext(String expression, boolean useRegex, long currentMessage, long pageSize) {
@@ -357,7 +357,7 @@ public class Log4jFileParser implements LogFileParser {
 			while (true) {
 				message = nextMessage();
 				if(message == null) {
-					return null; //EOF was reached while trying to match the expression and the messages
+					return generatePage(new ArrayList<LogMessage>(0), 0, 1L, 1L, 1L); //EOF was reached while trying to match the expression and the messages
 				} else if(isExpressionFound(message, expression, useRegex)) {
 					break;
 				}
@@ -371,15 +371,15 @@ public class Log4jFileParser implements LogFileParser {
 				messageList.add(convertMessageFromListToLogMessage(message, checkExpandRequired, expression, useRegex));
 			}
 
-			return generatePage(messageList, currentMessage, 1L, 1L, 0L); //FIXME: dummy values are used here
+			return generatePage(messageList, currentMessage, 1L, 1L, 1L); //FIXME: dummy values are used here
 		} else {
-			return null; //This only happens if the EOF was reached when setting the position given by the user
+			return generatePage(new ArrayList<LogMessage>(0), 0, 1L, 1L, 1L); //This only happens if the EOF was reached when setting the position given by the user
 		}
 	}
 
 	/*
 	 * 
-	 * @return the previous page starting at a message containing the given expression, unless... TODO: check
+	 * @return the previous page starting at a message containing the given expression, which is empty if no messages are found
 	 */
 	@Override
 	public Page<LogMessage> findPrev(String expression, boolean useRegex, long currentMessage, long pageSize) {
@@ -392,7 +392,7 @@ public class Log4jFileParser implements LogFileParser {
 			while (true) {
 				message = prevMessage();
 				if(message == null) {
-					return null; //BOF was reached while trying to match the expression and the messages
+					return generatePage(new ArrayList<LogMessage>(0), 0, 1L, 1L, 1L); //BOF was reached while trying to match the expression and the messages
 				} else if(isExpressionFound(message, expression, useRegex)) {
 					break;
 				}
@@ -406,15 +406,15 @@ public class Log4jFileParser implements LogFileParser {
 				messageList.add(convertMessageFromListToLogMessage(message, checkExpandRequired, expression, useRegex));
 			}
 
-			return generatePage(messageList, currentMessage, 1L, 1L, 0L); //FIXME: dummy values are used here
+			return generatePage(messageList, currentMessage, 1L, 1L, 1L); //FIXME: dummy values are used here
 		} else {
-			return null; //TODO: check whether this ever happens; note that arePositionsSet returns null iff the end of file was reached when attempting to set the position given by the user
+			return generatePage(new ArrayList<LogMessage>(0), 0, 1L, 1L, 1L);
 		}
 	}
 
 	/*
 	 * 
-	 * @return the next filtered page, unless the beginning of file was reached when attempting to set the position given by the user
+	 * @return the next filtered page, which is empty if the beginning of file was reached when attempting to set the position given by the user
 	 */
 	@Override
 	public Page<LogMessage> filterNext(String expression, boolean useRegex, long currentMessage, long pageSize) {
@@ -430,7 +430,7 @@ public class Log4jFileParser implements LogFileParser {
 						message = nextMessage();
 						if(message == null) {
 							if(counter == 0) {
-								return null; //EOF was reached while trying to match the expression and the messages
+								return generatePage(new ArrayList<LogMessage>(0), 0, 1L, 1L, 1L); //EOF was reached while trying to match the expression and the messages
 							} else {
 								break populate;
 							}
@@ -441,15 +441,15 @@ public class Log4jFileParser implements LogFileParser {
 					messageList.add(convertMessageFromListToLogMessage(message, checkExpandRequired, expression, useRegex));
 				}
 
-			return generatePage(messageList, currentMessage, 1L, 1L, 0L); //FIXME: dummy values are used here
+			return generatePage(messageList, currentMessage, 1L, 1L, 1L); //FIXME: dummy values are used here
 		} else {
-			return null;
+			return generatePage(new ArrayList<LogMessage>(0), 0, 1L, 1L, 1L);
 		}
 	}
 
 	/*
 	 * 
-	 * @return the previous filtered page, unless... TODO: check
+	 * @return the previous filtered page, which is empty if no messages are found
 	 */
 	@Override
 	public Page<LogMessage> filterPrev(String expression, boolean useRegex, long currentMessage, long pageSize) {
@@ -469,7 +469,7 @@ public class Log4jFileParser implements LogFileParser {
 						message = prevMessage();
 						if(message == null) {
 							if(counter == 0) {
-								return null; //BOF was reached while trying to match the expression and the messages
+								return generatePage(new ArrayList<LogMessage>(0), 0, 1L, 1L, 1L); //BOF was reached while trying to match the expression and the messages
 							} else {
 								break populate;
 							}
@@ -481,9 +481,9 @@ public class Log4jFileParser implements LogFileParser {
 				}
 			Collections.reverse(messageList); //Messages have already been read, but in reverse order: therefore we reorder them correctly here
 
-			return generatePage(messageList, currentMessage, 1L, 1L, 0L); //FIXME: dummy values are used here
+			return generatePage(messageList, currentMessage, 1L, 1L, 1L); //FIXME: dummy values are used here
 		} else {
-			return null;
+			return generatePage(new ArrayList<LogMessage>(0), 0, 1L, 1L, 1L);
 		}
 	}
 
@@ -492,10 +492,10 @@ public class Log4jFileParser implements LogFileParser {
 
 		messagePage.setData(messageList);
 		messagePage.setOffset(currentMessage);
-		messagePage.setCurrentPage(1L);
+		messagePage.setCurrentPage(currentPage);
 		messagePage.setPageSize(messageList.size());
-		messagePage.setTotalPages(1L);
-		messagePage.setTotalCount(0L); // TODO: chiarire questo campo.
+		messagePage.setTotalPages(totalPages);
+		messagePage.setTotalCount(totalCount); // TODO: chiarire questo campo.
 		return messagePage;
 	}
 	@Override
