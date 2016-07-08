@@ -26,8 +26,7 @@ public class DummyLogFileParser implements LogFileParser
         messages.add("Chuck Norris does not sleep. He waits.");
         messages.add("Chuck Norris can slam a revolving door.");
         long counter = 1;
-        dummyMessages = Sets.newHashSet(new LogMessage(counter++, new Date(), "INFO", "Thread-01", "StaticLogGenerator",
-                                                       messages),
+        dummyMessages = Sets.newHashSet(new LogMessage(counter++, new Date(), "INFO", "Thread-01", "StaticLogGenerator", messages),
                                         new LogMessage(counter++, new Date(), "WARNING", "Thread-01", "StaticLogGenerator",
                                                        Collections.singletonList("There is no theory of evolution. Just a list of creatures Chuck Norris has allowed to live.")),
                                         new LogMessage(counter++, new Date(), "TRACE", "Thread-01", "StaticLogGenerator",
@@ -68,7 +67,8 @@ public class DummyLogFileParser implements LogFileParser
         while (loop.hasNext())
         {
             LogMessage source = loop.next();
-            result.add(new LogMessage(counter++, new Date(), source.getLogLevel(), source.getThreadName(), source.getLoggerName(), source.getFullMessage()));
+            result.add(new LogMessage(counter++, new Date(), source.getLogLevel(), source.getThreadName(), source.getLoggerName(),
+                                      source.getFullMessage()));
 
             if (result.size() == pageSize)
                 break;

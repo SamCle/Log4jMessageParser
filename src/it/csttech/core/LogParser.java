@@ -1,7 +1,6 @@
 package it.csttech.core;
 
 import java.text.SimpleDateFormat;
-import java.util.Random;
 import java.util.Scanner;
 
 import it.csttech.core.data.Page;
