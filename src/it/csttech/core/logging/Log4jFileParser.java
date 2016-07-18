@@ -34,6 +34,9 @@ public class Log4jFileParser implements LogFileParser
     private int startingLineOfFirstMessage; //stores the actual beginning of messages in the input file (as line). Most likely it will be 0, unless the user provides a file that has been cut without care
     private List<Long> messageInitPositions;
     private List<Integer> messageInitLines;
+    
+    private String orphanLine;
+    private long orphanPosition;
 
     public Log4jFileParser(String filename)
     {
@@ -66,6 +69,9 @@ public class Log4jFileParser implements LogFileParser
             {}
         }
         while (!isStartOfMessage(line)); // Start of message found!
+        
+        orphanLine = line.toString();
+        orphanPosition = currentPosition;
 
         currentPosition = positionSaver;
         startingLineOfFirstMessage = currentLine;
@@ -154,50 +160,54 @@ public class Log4jFileParser implements LogFileParser
      * 
      * @return the full message as a List<String>, or null iff the EOF was already reached.
      */
-    private List<String> nextMessage()
-    {
-        currentMessage++;
-        int startRow = currentLine;
-        StringBuffer line = new StringBuffer();
-        long positionSaver;
-        List<String> lines = new ArrayList<>();
+    private List<String> nextMessage() {
+    	
+    	currentMessage++;
+    	int startRow = currentLine;
+    	StringBuffer line = new StringBuffer();
+    	long positionSaver;
+    	List<String> lines = new ArrayList<>();
 
-        addMessageReadInitPosition(currentPosition);
-        addMessageReadInitLine(currentLine);
-
-        line = readLine();
-        if (line == null)
-        {
-            return null; // It happens only at EOF.
-        }
-        else
-        {
-            lines.add(String.valueOf(startRow));
-            lines.add(line.toString());
-            positionSaver = currentPosition;
-            while (true)
-            {
-                line = readLine();
-                if (line == null)
-                {
-                    break;
-                }
-                else if (!isStartOfMessage(line))
-                {
-                    lines.add(line.toString());
-                    positionSaver = currentPosition;
-                }
-                else
-                {
-                    currentPosition = positionSaver;
-                    currentLine--;
-                    break;
-                }
-            }
-            return lines;
-        }
-
+    	addMessageReadInitPosition(currentPosition);
+    	addMessageReadInitLine(currentLine);
+    	
+    	if(orphanLine != null) {
+    		currentLine++;
+    		lines.add(String.valueOf(currentLine));
+    		lines.add(orphanLine);
+    		currentPosition = orphanPosition;
+    		positionSaver = currentPosition;
+    	} else {
+    		line = readLine();
+    		if(line == null){
+    			return null;
+    		} else {
+    			lines.add(String.valueOf(startRow));
+    			lines.add(line.toString());
+    			positionSaver = currentPosition;
+    		}
+    	}
+    	
+    	positionSaver = currentPosition;
+    	while (true) {
+    		line = readLine();
+    		if (line == null) {
+    			resetOrphans();
+    			break;
+    		} else if (!isStartOfMessage(line)) {
+    			lines.add(line.toString());
+    			positionSaver = currentPosition;
+    		} else {
+    			orphanLine = line.toString();
+    			orphanPosition = currentPosition;
+    			currentPosition = positionSaver;
+    			currentLine--;
+    			break;
+    		}
+    	}
+    	return lines;
     }
+
 
     /**
      * This method reads a full Log4j message, by calling repeatedly the readLine method. 
@@ -215,6 +225,7 @@ public class Log4jFileParser implements LogFileParser
         }
         currentLine = messageInitLines.get(currentMessage);
         currentPosition = messageInitPositions.get(currentMessage);
+        resetOrphans();
         List<String> message = nextMessage();
         currentMessage--;
         return message;
@@ -358,6 +369,8 @@ public class Log4jFileParser implements LogFileParser
      */
     private boolean arePositionsSet(int messageNumber)
     {
+    	resetOrphans();
+    	
         if (messageNumber == 0)
         {
             currentPosition = beginningOfMessages;
@@ -384,18 +397,21 @@ public class Log4jFileParser implements LogFileParser
             }
             else
             { //Then we already navigated a previous section of the file; next three lines reposition at the last message read
-                currentPosition = messageInitPositions.get(messageInitPositions.size() - 1);
-                currentLine = messageInitLines.get(messageInitPositions.size() - 1);
-                currentMessage = messageInitPositions.size() - 2;
+            	currentMessage = messageInitPositions.size() - 1;
+                currentLine = messageInitLines.get(currentMessage);
+            	currentPosition = messageInitPositions.get(currentMessage);
             }
-
-            for (int i = currentMessage; i < messageNumber; i++)
+            
+            for (int i = currentMessage; i <= messageNumber; i++)
             {
                 if (nextMessage() == null)
                 { // This only happens if we have already reached the EOF
                     return false;
                 }
             }
+            currentMessage--;
+            currentLine = messageInitLines.get(currentMessage);
+            currentPosition = messageInitPositions.get(currentMessage);
             return true;
         }
     }
@@ -424,7 +440,7 @@ public class Log4jFileParser implements LogFileParser
      * @return the next page starting at a message containing the given expression, which is empty if the end of file was reached when attempting to set the position given by the user
      */
     @Override
-    public Page<LogMessage> findNext(String expression, boolean useRegex, long currentMessage, long pageSize)
+    public Page<LogMessage> findNext(String expression, boolean useRegex, long currentMessage, long pageSize) 
     {
         if (arePositionsSet((int) currentMessage))
         { //We set all positions to the one passed by the user
@@ -445,10 +461,10 @@ public class Log4jFileParser implements LogFileParser
                     break;
                 }
             }
-            currentLine = messageInitLines.get(this.currentMessage);
-            currentPosition = messageInitPositions.get(this.currentMessage);
 
-            for (int counter = 0; counter < pageSize; counter++)
+            messageList.add(convertMessageFromListToLogMessage(message, checkExpandRequired, expression, useRegex));
+            
+            for (int counter = 1; counter < pageSize; counter++)
             {
                 message = nextMessage();
                 if (message == null)
@@ -456,7 +472,7 @@ public class Log4jFileParser implements LogFileParser
                 messageList.add(convertMessageFromListToLogMessage(message, checkExpandRequired, expression, useRegex));
             }
 
-            return generatePage(messageList, currentMessage, 1L, 1L, 1L); //FIXME: dummy values are used here
+            return generatePage(messageList, currentMessage, 1L, 1L, 1L); // FIXME: dummy values are used here
         }
         else
         {
@@ -619,6 +635,27 @@ public class Log4jFileParser implements LogFileParser
         messagePage.setTotalCount(totalCount); // TODO: chiarire questo campo.
         return messagePage;
     }
+    
+    public Page<LogMessage> getLastMessages(long size){
+    	long begin = System.currentTimeMillis();
+    	while(nextMessage() != null){}
+    	long end = System.currentTimeMillis();
+    	double time = ((double) end - begin) / 1000;
+    	System.out.println(time);
+    	return prevPage(currentMessage - 2, size);
+    }
+    
+    @SuppressWarnings("unused")
+	private void waitingSystem(){
+		if(currentMessage % 1000 == 0){
+			System.out.println("Reading message number " + currentMessage + ".");
+		}
+    }
+    
+    private void resetOrphans(){
+    	orphanLine = null;
+    	orphanPosition = -1;
+    }
 
     @Override
     public boolean hasTimestamp()
@@ -648,6 +685,18 @@ public class Log4jFileParser implements LogFileParser
     public boolean hasMessage()
     {
         return true;
+    }
+    
+    @SuppressWarnings("unused")
+	private void testingRegisters(){
+    	System.out.println("messageInitPositions:");
+    	for (Long l : messageInitPositions) {
+			System.out.println(l);
+		}
+    	System.out.println("\nmessageInitLines:");
+    	for (Integer i : messageInitLines) {
+			System.out.println(i);
+		}
     }
 
 }

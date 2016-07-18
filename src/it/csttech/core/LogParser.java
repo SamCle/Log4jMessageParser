@@ -15,6 +15,7 @@ public class LogParser {
 	private static String FILE_NAME;
 	private static LogFileParser parser;
 	private static Log4jFileParser otherParser;
+	@SuppressWarnings("unused")
 	private static Scanner scanner;
 
 	public static void main(String[] args) {
@@ -28,18 +29,20 @@ public class LogParser {
 			FILE_NAME = "input/input.log"; // hardcoded
 			otherParser = new Log4jFileParser(FILE_NAME,REGEX,timestampFormat);
 			switch (testingMode.toLowerCase()) {
+			case "lastmessage":
+				lastmessageMethod(32);
+				break;
 /*			case "readline":
 				readlineMethod(10); // hardcoded
 				break;
 			case "readmessage":
 				readmessageMethod(5); // hardcoded
 				otherParser.testingRegisters();
-				break;
-			case "readcommanded":
+				break;*/
+/*			case "readcommanded":
 				readcommandedMethod();
-				otherParser.testingRegisters();
-				break;
-			case "readrandom":
+				break;*/
+/*			case "readrandom":
 				readrandomMethod(100, 10); // hardcoded
 				otherParser.testingRegisters();
 				break;
@@ -87,7 +90,7 @@ public class LogParser {
 */
 /*	private static void readcommandedMethod(){
 		String newInput;
-		LogMessage output;
+		String output;
 		for (;;) {
 			System.out.print("\nInsert -1 to get the previous message, 1 to get the next one, or 0 to exit the program: ");
 			newInput = new String(scanner.next());
@@ -103,47 +106,47 @@ public class LogParser {
 				System.out.println("No message available.");
 				return;
 			}
-			printMessage(output);
+			System.out.println(output);
 		}
-	}
-*/
+	}*/
+
 	private static void readpagesMethod() {
-//		System.out.println("Printing next page (of size 5), when current position is 0:");
-//		printPage(otherParser.nextPage(0, 5));
-//		System.out.println("\nPrinting next page (of size 5), when current position is 100:");
-//		printPage(otherParser.nextPage(100, 5));
-//		System.out.println("\nPrinting previous page (of size 5), when current position is 50:");		
-//		printPage(otherParser.prevPage(50, 5));
-//		System.out.println("\nPrinting next page (of size 5), when current position is 5, against the string literal '2016-05-16 11:08:31,579':");
-//		printPage(otherParser.findNext("2016-05-16 11:08:31,579", false, 5, 5));
-//		System.out.println("\nPrinting previous page (of size 5), when current position is 50, against the string literal 'BCryptPasswordEncoder':");		
-//		printPage(otherParser.findPrev("BCryptPasswordEncoder", false, 50, 5));
-//		System.out.println("\nPrinting next filtered page (of size 5), when current position is 10, against the string literal 'INFO':");		
-//		printPage(otherParser.filterNext("INFO", false, 10, 5));
-//		System.out.println("\nPrinting previous filtered page (of size 5), when current position is 900, against the string literal 'DEBUG':");		
-//		printPage(otherParser.filterPrev("DEBUG", false, 900, 5));
-//		System.out.println("\nPrinting previous page (of size 5), when current position is 3:");		
-//		printPage(otherParser.prevPage(3, 5));
-//		System.out.println("\nPrinting previous page (of size 5), when current position is 3, agains the string literal '2016':");		
-//		printPage(otherParser.findPrev("2016", false, 3, 5));
-//		System.out.println("\nPrinting previous filtered page (of size 5), when current position is 3, agains the string literal '2016':");		
-//		printPage(otherParser.filterPrev("2016", false, 7, 10));
-		System.out.println("\nPrinting next filtered page (of size 5), when current position is 10, against the string literal 'GabrielePichierri':");
-		printPage(otherParser.filterNext("GabrielePichierri", false, 10, 5));
+		System.out.println("Printing next page (of size 5), when current position is 0:");
+		printPage(otherParser.nextPage(0, 5));
+		System.out.println("\nPrinting next page (of size 5), when current position is 100:");
+		printPage(otherParser.nextPage(100, 5));
+		System.out.println("\nPrinting previous page (of size 5), when current position is 50:");		
+		printPage(otherParser.prevPage(50, 5));
+		System.out.println("\nPrinting next page (of size 5), when current position is 5, against the string literal '2016-05':");
+		printPage(otherParser.findNext("2016-05", false, 5, 5));
+		System.out.println("\nPrinting previous page (of size 5), when current position is 50, against the string literal '2016-05':");		
+		printPage(otherParser.findPrev("2016-05", false, 50, 5));
+		System.out.println("\nPrinting next filtered page (of size 5), when current position is 10, against the string literal 'INFO':");		
+		printPage(otherParser.filterNext("INFO", false, 10, 5));
+		System.out.println("\nPrinting previous filtered page (of size 5), when current position is 900, against the string literal 'DEBUG':");		
+		printPage(otherParser.filterPrev("DEBUG", false, 900, 5));
+		System.out.println("\nPrinting previous page (of size 5), when current position is 3:");		
+		printPage(otherParser.prevPage(3, 5));
+		System.out.println("\nPrinting previous page (of size 5), when current position is 3, agains the string literal '2016':");		
+		printPage(otherParser.findPrev("2016", false, 3, 5));
+		System.out.println("\nPrinting previous filtered page (of size 5), when current position is 3, agains the string literal '2016':");		
+		printPage(otherParser.filterPrev("2016", false, 7, 10));
+		System.out.println("\nPrinting next filtered page (of size 5), when current position is 10, against the string literal 'INFO':");
+		printPage(otherParser.filterNext("INFO", false, 10, 5));
 
 	}
 
 	
 	
 	
-/*	private static LogMessage basicOperation(String direction){
+/*	private static String basicOperation(String direction){
 		switch(direction){
-		case "-1": return otherParser.prevMessage0();
-		case "1": return otherParser.readMessage0();
+		case "-1": return otherParser.prevMessage().get(1);
+		case "1": return otherParser.nextMessage().get(1);
 		default: return null;
 		}
-	}
-*/
+	}*/
+
 /*	private static boolean offSet(int lineNumber){
 		for (int i = 0 ; i < lineNumber; i++) {
 			if(otherParser.readMessage0() == null){
@@ -180,7 +183,7 @@ public class LogParser {
 		for (String s : message.getFullMessage()) {
 			System.out.print(s);
 		}
-		System.out.println("  Is expand required: " + message.isExpandRequired());
+		// System.out.println("  Is expand required: " + message.isExpandRequired());
 	}
 	
 	private static void printPage(Page<LogMessage> page) {
@@ -191,6 +194,10 @@ public class LogParser {
 				printMessage(message);
 			}
 		}
+	}
+	
+	private static void lastmessageMethod(int size){
+		printPage(otherParser.getLastMessages(size));
 	}
 
 }
