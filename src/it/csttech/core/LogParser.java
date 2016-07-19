@@ -27,7 +27,7 @@ public class LogParser {
 			String timestampFormat = "yyyy-MM-dd HH:mm:ss,SSS";
 			//                        2016-05-16 11:08:29,492
 			FILE_NAME = "input/input.log"; // hardcoded
-			otherParser = new Log4jFileParser(FILE_NAME,REGEX,timestampFormat);
+			otherParser = new Log4jFileParser(FILE_NAME,REGEX,timestampFormat, null); // hardcoded
 			switch (testingMode.toLowerCase()) {
 			case "lastmessage":
 				lastmessageMethod(32);
