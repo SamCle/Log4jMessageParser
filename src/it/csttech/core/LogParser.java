@@ -22,7 +22,7 @@ public class LogParser {
 		boolean condition = true; // hardcoded
 		if (condition) {
 			scanner = new Scanner(System.in);
-			String testingMode = "readpages"; // hardcoded
+			String testingMode = "lastpage"; // hardcoded
 			REGEX = "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]{3}"; // hardcoded
 			String timestampFormat = "yyyy-MM-dd HH:mm:ss,SSS";
 			//                        2016-05-16 11:08:29,492
@@ -46,7 +46,34 @@ public class LogParser {
 				readrandomMethod(100, 10); // hardcoded
 				otherParser.testingRegisters();
 				break;
-*/			case "readpages":
+*/			
+			case "lastpage":
+				printPage(otherParser.getLastPage(5));
+				System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
+				System.out.println("");
+				printPage(otherParser.prevPage(5));
+				System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
+				System.out.println("");
+				printPage(otherParser.nextPage(5));
+				System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
+				System.out.println("");
+				printPage(otherParser.prevPage(5));
+				System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
+				System.out.println("");
+				printPage(otherParser.prevPage(5));
+				System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
+				System.out.println("");
+				printPage(otherParser.prevPage(5));
+				System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
+				System.out.println("");
+				printPage(otherParser.nextPage(5));
+				System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
+				System.out.println("");
+				printPage(otherParser.nextPage(5));
+				System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
+				System.out.println("");
+				break;
+			case "readpages":
 				readpagesMethod();
 				break;
 			case "readsingle":

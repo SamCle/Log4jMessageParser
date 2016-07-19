@@ -34,16 +34,24 @@ public class Log4jFileParser implements LogFileParser
     private int startingLineOfFirstMessage; //stores the actual beginning of messages in the input file (as line). Most likely it will be 0, unless the user provides a file that has been cut without care
     private List<Long> messageInitPositions;
     private List<Integer> messageInitLines;
+	public long pageBeginPosition, pageEndPosition; // these fields are involved in calculations based on general use of currentPosition without currentLine nor currentMessage
+    
     
     private String orphanLine;
     private long orphanPosition;
-
+    
     public Log4jFileParser(String filename)
     {
-        this(filename, STANDARD_REGEX, STANDARD_TIMESTAMP);
+        this(filename, STANDARD_REGEX, STANDARD_TIMESTAMP, null);
     }
+    
+    public Log4jFileParser(String filename, Long currentPosition)
+    {
+        this(filename, STANDARD_REGEX, STANDARD_TIMESTAMP, currentPosition);
+    }
+    
 
-    public Log4jFileParser(String filename, String regex, String timestampFormat)
+    public Log4jFileParser(String filename, String regex, String timestampFormat, Long currentPosition)
     {
         this.timestampFormat = timestampFormat;
         this.regex = regex;
@@ -54,12 +62,17 @@ public class Log4jFileParser implements LogFileParser
             throw new IllegalArgumentException("This file does not exist");
         }
 
-        currentPosition = 0L;
+        if (currentPosition == null) {
+        	setCurrentPositionToEndOfFile();
+		} else {
+			this.currentPosition = currentPosition;
+		}
+        
         long positionSaver;
         StringBuffer line = new StringBuffer();
         do
         {
-            positionSaver = currentPosition;
+            positionSaver = this.currentPosition;
             line = readLine();
             if (line == null)
             { // Then it's EOF.
@@ -71,9 +84,9 @@ public class Log4jFileParser implements LogFileParser
         while (!isStartOfMessage(line)); // Start of message found!
         
         orphanLine = line.toString();
-        orphanPosition = currentPosition;
+        orphanPosition = this.currentPosition;
 
-        currentPosition = positionSaver;
+        this.currentPosition = positionSaver;
         startingLineOfFirstMessage = currentLine;
         beginningOfMessages = positionSaver;
         currentMessage = 0;
@@ -698,5 +711,175 @@ public class Log4jFileParser implements LogFileParser
 			System.out.println(i);
 		}
     }
+    
+    
+    // Begin of other kind of logic, based only on long positions (currentPosition, pageBeginPosition, pageEndPosition).
+    
+    public Page<LogMessage> getLastPage(long size){
+    	return setCurrentPositionToEndOfFile() ? prevPage(size) : null; 
+    }
+    
+    public Page<LogMessage> nextPage(long size){
+    	currentPosition = pageEndPosition;
+    	pageBeginPosition = currentPosition;
+    	resetOrphans();
+    	List<LogMessage> result = new ArrayList<>();
+    	LogMessage message;
+    	for(long l = 0; l < size; l++){
+    		message = convertMessageFromListToLogMessage(plainNextMessage(), false, "", true);
+    		if (message == null) {
+    			return generatePage(result, 1L, 1L, 1L, 1L);
+			} else {
+	    		result.add(message);
+			}
+    	}
+    	pageEndPosition = currentPosition;
+    	return generatePage(result, 1L, 1L, 1L, 1L);
+    }
+    
+    
+    private List<String> plainNextMessage() { // TODO: unificare
+    	StringBuffer line = new StringBuffer();
+    	long positionSaver;
+    	List<String> lines = new ArrayList<>();
+    	if(orphanLine != null) {
+    		lines.add("0");
+    		lines.add(orphanLine);
+    		currentPosition = orphanPosition;
+    		positionSaver = currentPosition;
+    	} else {
+    		line = readLine();
+    		currentLine--;
+    		if(line == null){
+    			return null;
+    		} else {
+    			lines.add("0");
+    			lines.add(line.toString());
+    			positionSaver = currentPosition;
+    		}
+    	}
+    	positionSaver = currentPosition;
+    	while (true) {
+    		line = readLine();
+    		currentLine--;
+    		if (line == null) {
+    			resetOrphans();
+    			break;
+    		} else if (!isStartOfMessage(line)) {
+    			lines.add(line.toString());
+    			positionSaver = currentPosition;
+    		} else {
+    			orphanLine = line.toString();
+    			orphanPosition = currentPosition;
+    			currentPosition = positionSaver;
+    			break;
+    		}
+    	}
+    	return lines;
+    }
+    
+    public Page<LogMessage> prevPage(long size){
+    	currentPosition = pageBeginPosition;
+    	pageEndPosition = currentPosition;
+    	List<LogMessage> result = new ArrayList<>();
+    	LogMessage message;
+    	for(long l = 0; l < size; l++){
+    		message = getPrevMessage();
+    		if (message == null) {
+    			return generatePage(result, 1L, 1L, 1L, 1L);
+			} else {
+	    		result.add(0, message);
+			}
+    	}
+    	pageBeginPosition = currentPosition;
+    	return generatePage(result, 1L, 1L, 1L, 1L);
+    }
+    
+    private boolean setCurrentPositionToEndOfFile(){
+    	try (FileChannel fileChannel = FileChannel.open(file, StandardOpenOption.READ)) {
+    		currentPosition = fileChannel.size();
+    		pageBeginPosition = currentPosition;
+    		pageEndPosition = currentPosition;
+        	return true;
+    	} catch (IOException e) {
+    		System.out.println("I/O Exception: " + e);
+    		return false;
+		}
+    }
+    
+    private LogMessage getPrevMessage(){
+    	StringBuffer line;
+    	List<String> message = new ArrayList<>();
+    	message.add("0");
+    	do {
+    		line = prevLine();				
+    		if(line == null){
+    			return null;
+    		}
+    		message.add(1, line.toString());
+    	} while(! isStartOfMessage(line));
+    	 return convertMessageFromListToLogMessage(message, false, "", true);
+    }
 
+    private StringBuffer prevLine(){
+    	if (currentPosition == 0) {
+    		return null;
+    	}
+    	try (FileChannel fileChannel = FileChannel.open(file, StandardOpenOption.READ)) {
+
+    		StringBuffer line = new StringBuffer();
+    		StringBuffer eol = new StringBuffer();
+    		int currentChar = -1;
+    		ByteBuffer byteBuffer;
+
+    		for(byte b = 0; b < 2; b++){
+    			
+                currentPosition--;
+        		fileChannel.position(currentPosition);
+                byteBuffer = ByteBuffer.allocate(1);
+        		fileChannel.read(byteBuffer);
+                byteBuffer.rewind();
+                currentChar = byteBuffer.get(byteBuffer.position());
+    			
+    			if (currentChar == -1) {
+    				break;
+    			} else {
+    				eol.insert(0, (char) currentChar);
+    			}
+    		}
+
+    		if(eol.length() < 2){
+    			return eol;
+    		} else if((eol.charAt(0) == '\r' || eol.charAt(0) == '\n') && (eol.charAt(0) == '\n' || eol.charAt(1) == '\r') ){
+    			currentPosition++;
+    			return line.append(eol.charAt(1));
+    		}
+    		line.append(eol);
+
+    		while(true){
+    			
+                currentPosition--;
+        		fileChannel.position(currentPosition);
+                byteBuffer = ByteBuffer.allocate(1);
+        		fileChannel.read(byteBuffer);
+                byteBuffer.rewind();
+                currentChar = byteBuffer.get(byteBuffer.position());
+    			
+    			//System.out.println(currentChar);
+    			if (currentChar == -1) {
+    				break;
+    			}
+    			if (currentChar == '\n' || currentChar == '\r') {
+    				currentPosition++;
+    				break;
+    			}
+    			line.insert(0, (char) currentChar);
+    		}
+    		return line;
+    	} catch (IOException e) {
+    		System.out.println("I/O Exception: " + e);
+    		return null;
+    	}
+    }
+    
 }
