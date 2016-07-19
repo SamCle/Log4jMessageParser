@@ -62,11 +62,7 @@ public class Log4jFileParser implements LogFileParser
             throw new IllegalArgumentException("This file does not exist");
         }
 
-        if (currentPosition == null) {
-        	setCurrentPositionToEndOfFile();
-		} else {
-			this.currentPosition = currentPosition;
-		}
+        this.currentPosition = 0;
         
         long positionSaver;
         StringBuffer line = new StringBuffer();
@@ -94,6 +90,11 @@ public class Log4jFileParser implements LogFileParser
         messageInitPositions.add(new Long(-1));
         messageInitLines = new ArrayList<Integer>();
         messageInitLines.add(new Integer(-1));
+        if (currentPosition == null) {
+        	setCurrentPositionToEndOfFile();
+		} else {
+			this.currentPosition = currentPosition;
+		}
     }
 
     /**
