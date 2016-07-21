@@ -5,7 +5,7 @@ import java.util.Scanner;
 
 import it.csttech.core.data.Page;
 import it.csttech.core.logging.DummyLogFileParser;
-import it.csttech.core.logging.Log4jFileParser;
+import it.csttech.core.logging.LogFileParserImpl;
 import it.csttech.core.logging.LogFileParser;
 import it.csttech.core.logging.LogMessage;
 
@@ -14,77 +14,52 @@ public class LogParser {
 	private static String REGEX;
 	private static String FILE_NAME;
 	private static LogFileParser parser;
-	private static Log4jFileParser otherParser;
+	private static LogFileParserImpl otherParser;
+	private static String timestampFormat;
 	@SuppressWarnings("unused")
 	private static Scanner scanner;
 
 	public static void main(String[] args) {
-		boolean condition = true; // hardcoded
-		if (condition) {
-			scanner = new Scanner(System.in);
-			String testingMode = "lastpage"; // hardcoded
-			REGEX = "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]{3}"; // hardcoded
-			String timestampFormat = "yyyy-MM-dd HH:mm:ss,SSS";
-			//                        2016-05-16 11:08:29,492
-			FILE_NAME = "input/input.log"; // hardcoded
-			otherParser = new Log4jFileParser(FILE_NAME,REGEX,timestampFormat, null); // hardcoded
-			switch (testingMode.toLowerCase()) {
-			case "lastmessage":
-				lastmessageMethod(32);
-				break;
-/*			case "readline":
-				readlineMethod(10); // hardcoded
-				break;
-			case "readmessage":
-				readmessageMethod(5); // hardcoded
-				otherParser.testingRegisters();
-				break;*/
-/*			case "readcommanded":
-				readcommandedMethod();
-				break;*/
-/*			case "readrandom":
-				readrandomMethod(100, 10); // hardcoded
-				otherParser.testingRegisters();
-				break;
-*/			
-			case "lastpage":
-				printPage(otherParser.getLastPage(5));
-				System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
-				System.out.println("");
-				printPage(otherParser.prevPage(5));
-				System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
-				System.out.println("");
-				printPage(otherParser.nextPage(5));
-				System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
-				System.out.println("");
-				printPage(otherParser.prevPage(5));
-				System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
-				System.out.println("");
-				printPage(otherParser.prevPage(5));
-				System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
-				System.out.println("");
-				printPage(otherParser.prevPage(5));
-				System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
-				System.out.println("");
-				printPage(otherParser.nextPage(5));
-				System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
-				System.out.println("");
-				printPage(otherParser.nextPage(5));
-				System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
-				System.out.println("");
-				break;
-			case "readpages":
-				readpagesMethod();
-				break;
-			case "readsingle":
-				printPage(otherParser.nextPage(0, 25)); // hardcoded
-				break;
-			default:
-				exmain();
-				break;
-			}
-		} else {
+		scanner = new Scanner(System.in);
+		
+		String testingMode = "readpages"; // hardcoded
+		
+		REGEX = "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]{3}"; // hardcoded
+		timestampFormat = "yyyy-MM-dd HH:mm:ss,SSS";
+		//                        2016-05-16 11:08:29,492
+		FILE_NAME = "input/input.log"; // hardcoded
+		otherParser = new LogFileParserImpl(FILE_NAME,REGEX,timestampFormat, null); // hardcoded
+		switch (testingMode.toLowerCase()) {
+		case "lastmessage":
+			lastmessageMethod(32);
+			break;
+/*		case "readline":
+			readlineMethod(10); // hardcoded
+			break;
+		case "readmessage":
+			readmessageMethod(5); // hardcoded
+			otherParser.testingRegisters();
+			break;
+		case "readcommanded":
+			readcommandedMethod();
+			break;
+		case "readrandom":
+			readrandomMethod(100, 10); // hardcoded
+			otherParser.testingRegisters();
+			break;
+			*/			
+		case "lastpage":
+			lastpageMethod();
+			break;
+		case "readpages":
+			readpagesMethod();
+			break;
+		case "readsingle":
+			printPage(otherParser.nextPage(0, 25)); // hardcoded
+			break;
+		default:
 			exmain();
+			break;
 		}
 	}
 
@@ -138,6 +113,7 @@ public class LogParser {
 	}*/
 
 	private static void readpagesMethod() {
+		otherParser = new LogFileParserImpl(FILE_NAME,REGEX,timestampFormat, 0L);
 		System.out.println("Printing next page (of size 5), when current position is 0:");
 		printPage(otherParser.nextPage(0, 5));
 		System.out.println("\nPrinting next page (of size 5), when current position is 100:");
@@ -163,8 +139,36 @@ public class LogParser {
 
 	}
 
-	
-	
+	private static void lastpageMethod(){
+		otherParser = new LogFileParserImpl(FILE_NAME,REGEX,timestampFormat, null);
+		System.out.println("lastPage");
+		printPage(otherParser.getLastPage(5));
+		System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
+		System.out.println("");
+		System.out.println("prevPage");
+		printPage(otherParser.prevPage(-1, 5));
+		System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
+		System.out.println("");
+		System.out.println("nextPage");
+		printPage(otherParser.nextPage(-1, 5));
+		System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
+		System.out.println("");
+		System.out.println("findPrev");
+		printPage(otherParser.findPrev("2016-05", false, -1, 5));
+		System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
+		System.out.println("");
+		System.out.println("findNext");
+		printPage(otherParser.findNext("2016-06-09", false, -1, 5));
+		System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
+		System.out.println("");
+		System.out.println("filterPrev");
+		printPage(otherParser.filterPrev("INFO", false, -1, 5));
+		System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
+		System.out.println("");
+		System.out.println("filterNext");
+		printPage(otherParser.filterNext("-06-", false, -1, 5));
+		System.out.println(otherParser.pageBeginPosition + " - " + otherParser.pageEndPosition);
+	}
 	
 /*	private static String basicOperation(String direction){
 		switch(direction){
