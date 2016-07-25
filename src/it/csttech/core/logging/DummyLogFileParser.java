@@ -16,7 +16,7 @@ import it.csttech.core.data.PageImpl;
 
 public class DummyLogFileParser implements LogFileParser
 {
-
+    private static final long serialVersionUID = -1472119238511398141L;
     private static final Set<LogMessage> dummyMessages;
 
     static

@@ -808,10 +808,10 @@ public class LogFileParserImpl implements LogFileParser
 
         messagePage.setData(messageList);
         messagePage.setOffset(currentMessage);
-        messagePage.setCurrentPage(currentPage);
-        messagePage.setPageSize(messageList.size());
+        messagePage.setCurrentPage(messageList.size() > 0 ? currentPage : 0L);
+        messagePage.setTotalCount(messageList.size() > 0 ? totalCount : 0L);
+        messagePage.setPageSize(messageList.size() > 0 ? messageList.size() : 25L);
         messagePage.setTotalPages(totalPages);
-        messagePage.setTotalCount(totalCount);
         return messagePage;
     }
 
