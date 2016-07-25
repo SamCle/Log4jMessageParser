@@ -1,9 +1,11 @@
 package it.csttech.core.logging;
 
+import java.io.Serializable;
+
 import it.csttech.core.data.Page;
 
 
-public interface LogFileParser
+public interface LogFileParser extends Serializable
 {
 
     /**
